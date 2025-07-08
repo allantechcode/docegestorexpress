@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR">
+<head> <link rel="icon" href="favicon.ico" type="image/x-icon">
+<meta charset="utf-8"/>
+<title>Meus Pedidos</title>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
+<style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f9f9f9; }
+    h2 { text-align: center; color: #4CAF50; }
+    .pedido { background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 15px; }
+    .status-tag {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: white;
+      text-transform: uppercase;
+    }
+    .pendente { background-color: orange; }
+    .aprovado { background-color: #03a9f4; }
+    .concluido { background-color: #4CAF50; }
+    .detalhes { display: none; margin-top: 10px; background: #f1f1f1; padding: 10px; border-left: 3px solid #4CAF50; border-radius: 6px; }
+    button { padding: 8px 14px; border-radius: 6px; border: none; background: #604126; color: white; cursor: pointer; margin-top: 10px; }
+    select { padding: 8px; margin: 10px 0; }
+    #paginacao { text-align: center; margin-top: 20px; }
+    .page-btn { margin: 0 5px; cursor: pointer; background: #4CAF50; color: white; border: none; padding: 6px 12px; border-radius: 4px; }
+    @media (max-width: 600px) {
+      body { padding: 10px; }
+    }
+  </style>
+</head>
+<body>
+<h2>Meus Pedidos</h2>
+<label for="filtroStatus"><strong>Filtrar por status:</strong></label>
+<select id="filtroStatus" onchange="carregarPedidos()">
+<option value="todos">Todos</option>
+<option value="pendente">PENDENTE</option>
+<option value="aprovado">APROVADO</option>
+<option value="concluido">CONCLUÍDO</option>
+</select>
+<div id="listaPedidos"></div>
+<div id="paginacao"></div>
+<script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBaeSVaAa8RoX_dYW8_YKxY7naw9vq8OX8",
+      authDomain: "docepedidoexpress.firebaseapp.com",
+      projectId: "docepedidoexpress",
+      storageBucket: "docepedidoexpress.firebasestorage.app",
+      messagingSenderId: "599415242749",
+      appId: "1:599415242749:web:e2b4ad85d82aef617ba394"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    let pedidosTodos = [];
+    let paginaAtual = 1;
+    const porPagina = 10;
+
+    auth.onAuthStateChanged(user => {
+      if (!user) {
+        document.body.innerHTML = "<p style='text-align:center;color:#c00;'>Você precisa estar logado para visualizar seus pedidos.</p>";
+        return;
+      }
+
+      db.collection("pedidos")
+        .where("usuarioId", "==", user.uid)
+        .get()
+        .then(snapshot => {
+          pedidosTodos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          pedidosTodos.sort((a, b) => b.dataHora.localeCompare(a.dataHora));
+          carregarPedidos();
+        })
+        .catch(error => {
+          document.getElementById("listaPedidos").innerHTML =
+            "<p style='color:red;'>Erro ao carregar pedidos: " + error.message + "</p>";
+        });
+    });
+
+    function carregarPedidos() {
+      const statusSelecionado = document.getElementById("filtroStatus").value;
+      let pedidosFiltrados = pedidosTodos;
+      if (statusSelecionado !== "todos") {
+        pedidosFiltrados = pedidosTodos.filter(p => p.status.toLowerCase() === statusSelecionado);
+      }
+
+      const inicio = (paginaAtual - 1) * porPagina;
+      const fim = inicio + porPagina;
+      const pedidosPagina = pedidosFiltrados.slice(inicio, fim);
+
+      const container = document.getElementById("listaPedidos");
+      container.innerHTML = "";
+
+      pedidosPagina.forEach((pedido, i) => {
+        const div = document.createElement("div");
+        div.className = "pedido";
+        const statusClass = pedido.status.toLowerCase();
+        div.innerHTML = `
+          <span class="status-tag ${statusClass}">${pedido.status}</span><br>
+          <strong>Pedido #${inicio + i + 1}</strong><br>
+          <strong>Data/Hora:</strong> ${pedido.dataHora}<br>
+          <strong>Valor Total:</strong> ${pedido.valorTotal}<br>
+          <button onclick="mostrarDetalhes('${pedido.id}')">Detalhes</button>
+          <div class="detalhes" id="detalhes-${pedido.id}">
+            ${pedido.doces.map(d => `${d.quantidade} ${d.nome}`).join("<br>")}
+            <br><br><strong>Total de Doces:</strong> ${pedido.totalDoces}
+          </div>
+        `;
+        container.appendChild(div);
+      });
+
+      renderPaginacao(pedidosFiltrados.length);
+    }
+
+    function mostrarDetalhes(id) {
+      const el = document.getElementById("detalhes-" + id);
+      el.style.display = el.style.display === "block" ? "none" : "block";
+    }
+
+    function renderPaginacao(total) {
+      const div = document.getElementById("paginacao");
+      div.innerHTML = "";
+
+      const totalPaginas = Math.ceil(total / porPagina);
+      for (let i = 1; i <= totalPaginas; i++) {
+        const btn = document.createElement("button");
+        btn.className = "page-btn";
+        btn.innerText = i;
+        if (i === paginaAtual) btn.disabled = true;
+        btn.onclick = () => {
+          paginaAtual = i;
+          carregarPedidos();
+        };
+        div.appendChild(btn);
+      }
+    }
+  </script>
+<footer style="margin-top:40px; text-align:center; font-size:0.9rem; color:#999;">
+    <button onclick="window.location.href='index.html'" style="margin-top:10px; 
+    padding:10px 20px; background:#4CAF50; color:white; border:none; 
+    border-radius:6px; font-weight:bold;">Voltar para Pedidos</button>
+<p>DoceGestorExpress - 2025<br/>AllanTechCode ®</p>
+</footer>
+</body>
+</html>

@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Painel Master - DoceGestorExpress</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f8f6f4;
+      margin: 0;
+      padding: 20px;
+    }
+    .login-container {
+      max-width: 1100px;
+      margin: auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 12px rgba(0,0,0,0.05);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      background: #f4f0eb;
+      text-align: left;
+    }
+    button, select {
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+<div class="login-container">
+  <img src="logo.png" alt="Logo DoceGestorExpress" style="max-height: 60px; display: block; margin: 0 auto 20px;" />
+  <h2 style="text-align: center; color: #604126;">Painel de Pedidos - MASTER</h2>
+  <div id="painelConteudo" style="display: none;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px;">
+      <div>
+        <label for="filtroStatus"><strong>Filtrar por Status:</strong></label>
+        <select id="filtroStatus" onchange="filtrarPedidos()" style="padding: 6px; border-radius: 6px; border: 1px solid #ccc;">
+          <option value="TODOS">TODOS</option>
+          <option value="PENDENTE">PENDENTE</option>
+          <option value="APROVADO">APROVADO</option>
+          <option value="CONCLUIDO">CONCLUÍDO</option>
+        </select>
+      </div>
+      <button onclick="carregarMaisPedidos()" style="padding: 6px 16px; border-radius: 6px; border: none; background: #888; color: white;">Carregar mais</button>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th></th>
+          <th>Cliente</th>
+          <th>Data/Hora</th>
+          <th>Caixa</th>
+          <th>Valor</th>
+          <th>Status</th>
+          <th>Detalhes</th>
+        </tr>
+      </thead>
+      <tbody id="tabelaPedidos"></tbody>
+    </table>
+    <div style="margin-top: 20px;">
+      <button onclick="gerarResumoSelecionados()" style="padding:10px 20px; background:#604126; color:white; border:none; border-radius:6px; font-weight:bold;">Gerar Resumo</button>
+    </div>
+    <div id="resumoPedidos" style="display:none; white-space:pre-wrap; background:#f5f5f5; border-radius:8px; padding:15px; margin-top:20px;"></div>
+    <div style="margin-top:10px;">
+      <button id="btnCopiarResumo" style="display:none; padding:8px 16px; background:#2196F3; color:#fff; border:none; border-radius:6px;">📋 Copiar Texto</button>
+      <button id="btnExportarResumo" style="display:none; padding:8px 16px; background:#4CAF50; color:#fff; border:none; border-radius:6px;">📥 Exportar TXT</button>
+    </div>
+  </div>
+  <div id="acessoNegado" style="display:none; text-align:center; color:#c0353e; font-weight:bold; margin-top:20px;">
+    Acesso restrito a usuários master.
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js">
+function carregarPedidos(reset = true) {
+  let query = db.collection("pedidos").orderBy("dataHora", "desc");
+  if (statusFiltroAtual !== "TODOS") {
+    query = query.where("status", "==", statusFiltroAtual);
+  }
+  if (ultimoDoc && !reset) {
+    query = query.startAfter(ultimoDoc);
+  }
+
+  query.limit(10).get().then(snapshot => {
+    const tabela = document.getElementById("tabelaPedidos");
+    if (reset) tabela.innerHTML = "";
+    if (!snapshot.empty) {
+      ultimoDoc = snapshot.docs[snapshot.docs.length - 1];
+      snapshot.forEach(doc => {
+        const p = doc.data();
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><input type="checkbox" class="selecionar-pedido" data-id="${doc.id}" data-pedido='${JSON.stringify(p).replace(/'/g, "&apos;")}'></td>
+          <td>${p.nome}</td>
+          <td>${p.dataHora || ''}</td>
+          <td>${p.tipo}</td>
+          <td>R$ ${p.valorTotal?.toFixed(2) || '0,00'}</td>
+          <td>
+            <select onchange="db.collection('pedidos').doc('${doc.id}').update({ status: this.value })">
+              <option value="PENDENTE"${p.status === 'PENDENTE' ? ' selected' : ''}>PENDENTE</option>
+              <option value="APROVADO"${p.status === 'APROVADO' ? ' selected' : ''}>APROVADO</option>
+              <option value="CONCLUIDO"${p.status === 'CONCLUIDO' ? ' selected' : ''}>CONCLUÍDO</option>
+            </select>
+          </td>
+          <td><button onclick='alert(JSON.stringify(${JSON.stringify(p)}, null, 2))'>Ver</button></td>
+        `;
+        tabela.appendChild(tr);
+      });
+    }
+  });
+}
+
+function carregarMaisPedidos() {
+  carregarPedidos(false);
+}
+
+function filtrarPedidos() {
+  statusFiltroAtual = document.getElementById("filtroStatus").value;
+  ultimoDoc = null;
+  carregarPedidos(true);
+}
+
+</script>
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js">
+function carregarPedidos(reset = true) {
+  let query = db.collection("pedidos").orderBy("dataHora", "desc");
+  if (statusFiltroAtual !== "TODOS") {
+    query = query.where("status", "==", statusFiltroAtual);
+  }
+  if (ultimoDoc && !reset) {
+    query = query.startAfter(ultimoDoc);
+  }
+
+  query.limit(10).get().then(snapshot => {
+    const tabela = document.getElementById("tabelaPedidos");
+    if (reset) tabela.innerHTML = "";
+    if (!snapshot.empty) {
+      ultimoDoc = snapshot.docs[snapshot.docs.length - 1];
+      snapshot.forEach(doc => {
+        const p = doc.data();
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><input type="checkbox" class="selecionar-pedido" data-id="${doc.id}" data-pedido='${JSON.stringify(p).replace(/'/g, "&apos;")}'></td>
+          <td>${p.nome}</td>
+          <td>${p.dataHora || ''}</td>
+          <td>${p.tipo}</td>
+          <td>R$ ${p.valorTotal?.toFixed(2) || '0,00'}</td>
+          <td>
+            <select onchange="db.collection('pedidos').doc('${doc.id}').update({ status: this.value })">
+              <option value="PENDENTE"${p.status === 'PENDENTE' ? ' selected' : ''}>PENDENTE</option>
+              <option value="APROVADO"${p.status === 'APROVADO' ? ' selected' : ''}>APROVADO</option>
+              <option value="CONCLUIDO"${p.status === 'CONCLUIDO' ? ' selected' : ''}>CONCLUÍDO</option>
+            </select>
+          </td>
+          <td><button onclick='alert(JSON.stringify(${JSON.stringify(p)}, null, 2))'>Ver</button></td>
+        `;
+        tabela.appendChild(tr);
+      });
+    }
+  });
+}
+
+function carregarMaisPedidos() {
+  carregarPedidos(false);
+}
+
+function filtrarPedidos() {
+  statusFiltroAtual = document.getElementById("filtroStatus").value;
+  ultimoDoc = null;
+  carregarPedidos(true);
+}
+
+</script>
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js">
+function carregarPedidos(reset = true) {
+  let query = db.collection("pedidos").orderBy("dataHora", "desc");
+  if (statusFiltroAtual !== "TODOS") {
+    query = query.where("status", "==", statusFiltroAtual);
+  }
+  if (ultimoDoc && !reset) {
+    query = query.startAfter(ultimoDoc);
+  }
+
+  query.limit(10).get().then(snapshot => {
+    const tabela = document.getElementById("tabelaPedidos");
+    if (reset) tabela.innerHTML = "";
+    if (!snapshot.empty) {
+      ultimoDoc = snapshot.docs[snapshot.docs.length - 1];
+      snapshot.forEach(doc => {
+        const p = doc.data();
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><input type="checkbox" class="selecionar-pedido" data-id="${doc.id}" data-pedido='${JSON.stringify(p).replace(/'/g, "&apos;")}'></td>
+          <td>${p.nome}</td>
+          <td>${p.dataHora || ''}</td>
+          <td>${p.tipo}</td>
+          <td>R$ ${p.valorTotal?.toFixed(2) || '0,00'}</td>
+          <td>
+            <select onchange="db.collection('pedidos').doc('${doc.id}').update({ status: this.value })">
+              <option value="PENDENTE"${p.status === 'PENDENTE' ? ' selected' : ''}>PENDENTE</option>
+              <option value="APROVADO"${p.status === 'APROVADO' ? ' selected' : ''}>APROVADO</option>
+              <option value="CONCLUIDO"${p.status === 'CONCLUIDO' ? ' selected' : ''}>CONCLUÍDO</option>
+            </select>
+          </td>
+          <td><button onclick='alert(JSON.stringify(${JSON.stringify(p)}, null, 2))'>Ver</button></td>
+        `;
+        tabela.appendChild(tr);
+      });
+    }
+  });
+}
+
+function carregarMaisPedidos() {
+  carregarPedidos(false);
+}
+
+function filtrarPedidos() {
+  statusFiltroAtual = document.getElementById("filtroStatus").value;
+  ultimoDoc = null;
+  carregarPedidos(true);
+}
+
+</script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyBaeSVaAa8RoX_dYW8_YKxY7naw9vq8OX8",
+  authDomain: "docepedidoexpress.firebaseapp.com",
+  projectId: "docepedidoexpress",
+  storageBucket: "docepedidoexpress.firebasestorage.app",
+  messagingSenderId: "599415242749",
+  appId: "1:599415242749:web:e2b4ad85d82aef617ba394",
+  measurementId: "G-H7QX7D597V"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+let ultimoDoc = null;
+let statusFiltroAtual = 'TODOS';
+
+const db = firebase.firestore();
+
+auth.onAuthStateChanged(user => {
+  if (!user || user.email !== "boni.palhano@gmail.com") {
+    document.getElementById("acessoNegado").style.display = "block";
+    return;
+  }
+  document.getElementById("painelConteudo").style.display = "block";
+  carregarPedidos(true);
+});
+
+function carregarPedidos() {
+  db.collection("pedidos").orderBy("dataHora", "desc").get().then(snapshot => {
+    const tabela = document.getElementById("tabelaPedidos");
+    tabela.innerHTML = "";
+    snapshot.forEach(doc => {
+      const p = doc.data();
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><input type="checkbox" class="selecionar-pedido" data-id="${doc.id}" data-pedido='${JSON.stringify(p).replace(/'/g, "&apos;")}'></td>
+        <td>${p.nome}</td>
+        <td>${p.dataHora || ''}</td>
+        <td>${p.tipo}</td>
+        <td>R$ ${p.valorTotal?.toFixed(2) || '0,00'}</td>
+        <td>
+          <select onchange="db.collection('pedidos').doc('${doc.id}').update({ status: this.value })">
+            <option value="PENDENTE"${p.status === 'PENDENTE' ? ' selected' : ''}>PENDENTE</option>
+            <option value="APROVADO"${p.status === 'APROVADO' ? ' selected' : ''}>APROVADO</option>
+            <option value="CONCLUIDO"${p.status === 'CONCLUIDO' ? ' selected' : ''}>CONCLUÍDO</option>
+          </select>
+        </td>
+        <td><button onclick='alert(JSON.stringify(${JSON.stringify(p)}, null, 2))'>Ver</button></td>
+      `;
+      tabela.appendChild(tr);
+    });
+  });
+}
+
+function gerarResumoSelecionados() {
+  const checkboxes = document.querySelectorAll(".selecionar-pedido:checked");
+  if (!checkboxes.length) return alert("Selecione ao menos um pedido.");
+
+  let resumo = "";
+  let totalGeral = 0;
+  let grupoTotais = { TRADICIONAL: 0, TRUFADO: 0, MORANGO: 0 };
+
+  checkboxes.forEach(cb => {
+    const p = JSON.parse(cb.getAttribute("data-pedido"));
+    resumo += `${p.nome} - Caixa ${p.tipo} R$${p.valorTotal?.toFixed(2) || '0,00'}
+
+`;
+    for (const item of p.listaFormatada || []) {
+      resumo += `${item.qtd} ${item.nome}
+`;
+      grupoTotais[item.grupo] += item.qtd * item.valor;
+    }
+    totalGeral += p.valorTotal || 0;
+    resumo += "";
+  });
+
+  resumo += `Total de Pedidos: ${checkboxes.length}
+`;
+  resumo += `Tradicionais: R$${grupoTotais.TRADICIONAL.toFixed(2)}
+`;
+  resumo += `Trufados: R$${grupoTotais.TRUFADO.toFixed(2)}
+`;
+  resumo += `Morango: R$${grupoTotais.MORANGO.toFixed(2)}
+`;
+  resumo += `
+Total Geral: R$${totalGeral.toFixed(2)}`;
+
+  document.getElementById("resumoPedidos").style.display = "block";
+  document.getElementById("resumoPedidos").textContent = resumo;
+  document.getElementById("btnCopiarResumo").style.display = "inline-block";
+  document.getElementById("btnExportarResumo").style.display = "inline-block";
+}
+
+document.getElementById("btnCopiarResumo").onclick = () => {
+  const text = document.getElementById("resumoPedidos").textContent;
+  navigator.clipboard.writeText(text);
+  alert("Resumo copiado!");
+};
+
+document.getElementById("btnExportarResumo").onclick = () => {
+  const text = document.getElementById("resumoPedidos").textContent;
+  const blob = new Blob([text], { type: "text/plain" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "resumo_pedidos.txt";
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+function carregarPedidos(reset = true) {
+  let query = db.collection("pedidos").orderBy("dataHora", "desc");
+  if (statusFiltroAtual !== "TODOS") {
+    query = query.where("status", "==", statusFiltroAtual);
+  }
+  if (ultimoDoc && !reset) {
+    query = query.startAfter(ultimoDoc);
+  }
+
+  query.limit(10).get().then(snapshot => {
+    const tabela = document.getElementById("tabelaPedidos");
+    if (reset) tabela.innerHTML = "";
+    if (!snapshot.empty) {
+      ultimoDoc = snapshot.docs[snapshot.docs.length - 1];
+      snapshot.forEach(doc => {
+        const p = doc.data();
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><input type="checkbox" class="selecionar-pedido" data-id="${doc.id}" data-pedido='${JSON.stringify(p).replace(/'/g, "&apos;")}'></td>
+          <td>${p.nome}</td>
+          <td>${p.dataHora || ''}</td>
+          <td>${p.tipo}</td>
+          td>R$ ${parseFloat(p.valorTotal || 0).toFixed(2)}</td>
+          <td>
+            <select onchange="db.collection('pedidos').doc('${doc.id}').update({ status: this.value })">
+              <option value="PENDENTE"${p.status === 'PENDENTE' ? ' selected' : ''}>PENDENTE</option>
+              <option value="APROVADO"${p.status === 'APROVADO' ? ' selected' : ''}>APROVADO</option>
+              <option value="CONCLUIDO"${p.status === 'CONCLUIDO' ? ' selected' : ''}>CONCLUÍDO</option>
+            </select>
+          </td>
+          <td><button onclick='alert(JSON.stringify(${JSON.stringify(p)}, null, 2))'>Ver</button></td>
+        `;
+        tabela.appendChild(tr);
+      });
+    }
+  });
+}
+
+function carregarMaisPedidos() {
+  carregarPedidos(false);
+}
+
+function filtrarPedidos() {
+  statusFiltroAtual = document.getElementById("filtroStatus").value;
+  ultimoDoc = null;
+  carregarPedidos(true);
+}
+
+</script>
+</body>
+</html>

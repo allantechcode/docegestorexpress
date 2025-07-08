@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>DoceGestorExpress - Acesso</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body { background: #f8f7f4; color: #4a3b28; font-family: 'Segoe UI', Arial, sans-serif; }
+    .card-auth { max-width: 410px; margin: 48px auto 0 auto; background: #fff; border-radius: 18px; box-shadow: 0 8px 38px 0 rgba(0,0,0,0.10); padding: 32px 22px 32px 22px;}
+    .logo-auth { display: block; margin: 0 auto 18px auto; max-width: 85px; border-radius: 8px;}
+    .toggle-pw { border:none; background:transparent; font-size:1.1em; color:#ab9242; margin-left:-36px; }
+    .form-text-link { cursor:pointer; color:#9c7f1a; text-decoration:underline; }
+    @media (max-width: 350px) {
+      .card-auth { margin: 10px 2px; padding:18px 4px;}
+      .logo-auth { max-width:75vw;}
+    }
+
+    /* Footer responsivo */
+    .footer-app {
+      background: #f4f3f1;
+      border-top: 1px solid #ece8df;
+      font-size: 0.99em;
+      letter-spacing: .2px;
+      box-shadow: 0 -2px 12px 0 rgba(100,70,20,0.03);
+      margin-top: 50px;
+    }
+    .btn-whatsapp-footer {
+      background: #43be4c11;
+      color: #2e7d32;
+      border: 1px solid #43be4c55;
+      border-radius: 999px;
+      transition: background 0.18s, color 0.18s;
+    }
+    .btn-whatsapp-footer:hover,
+    .btn-whatsapp-footer:focus {
+      background: #43be4c !important;
+      color: #fff !important;
+      border-color: #43be4c !important;
+      text-decoration: none;
+    }
+    @media (max-width: 576px) {
+      .footer-app {
+        font-size: 0.96em;
+        padding-left: 0;
+        padding-right: 0;
+      }
+      .footer-app .container {
+        padding: 1.1rem 0.3rem;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="card-auth" id="authArea">
+  <!-- UI gerada via JS -->
+</div>
+
+<!-- Firebase SDK compat -->
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
+<script>
+  // SUAS CREDENCIAIS DO PROJETO
+  const firebaseConfig = {
+    apiKey: "AIzaSyBaeSVaAa8RoX_dYW8_YKxY7naw9vq8OX8",
+    authDomain: "docepedidoexpress.firebaseapp.com",
+    projectId: "docepedidoexpress",
+    storageBucket: "docepedidoexpress.firebasestorage.app",
+    messagingSenderId: "599415242749",
+    appId: "1:599415242749:web:e2b4ad85d82aef617ba394"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+
+  // Utilitário para ler parâmetros da URL
+  function getUrlParam(name) {
+    name = name.replace(/[[]/, "\\[").replace(/[\]]/, "\\]");
+    const regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+          results = regex.exec(window.location.search);
+    return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+  }
+
+  // Telas
+  function telaLogin(msg='', sessaoEncerrada='') {
+    document.getElementById('authArea').innerHTML = `
+      <img src="logo.png" class="logo-auth" alt="Logo" />
+      <h3 class="text-center mb-3" style="color:#a3791d;">Entrar</h3>
+      <input id="loginEmail" class="form-control mb-2" placeholder="E-mail" type="email" autocomplete="username" />
+      <div class="input-group mb-2">
+        <input id="loginSenha" class="form-control" placeholder="Senha" type="password" autocomplete="current-password" />
+        <button class="toggle-pw" onclick="togglePw('loginSenha', this)" tabindex="-1"><i class="bi bi-eye"></i></button>
+      </div>
+      <button class="btn btn-main w-100 mb-2" style="background:#c49d65;color:#fff;" onclick="fazerLogin()">Entrar</button>
+      <div id="msgSessaoEncerrada" class="alert alert-info mb-2" style="display:${sessaoEncerrada ? '' : 'none'};">${sessaoEncerrada}</div>
+      <div id="msgLogin" class="alert alert-danger mb-2" style="display:${msg ? '' : 'none'};">${msg}</div>
+      <div class="text-center small mb-2">
+        <span class="form-text-link" onclick="telaCadastro()">Criar conta</span> • 
+        <span class="form-text-link" onclick="telaRedefinir()">Esqueci minha senha</span>
+      </div>
+    `;
+  }
+  function telaCadastro(msg='') {
+  document.getElementById('authArea').innerHTML = `
+    <h4 class="text-center mb-2" style="color:#9c7f1a;">Criar Conta</h4>
+    <input id="cadNome" class="form-control mb-2" placeholder="Seu nome" type="text" autocomplete="name" />
+    <input id="cadEmail" class="form-control mb-2" placeholder="E-mail" type="email" autocomplete="email" />
+    <div class="input-group mb-2">
+      <input id="cadSenha" class="form-control" placeholder="Senha (mín. 6 caracteres)" type="password" autocomplete="new-password" />
+      <button class="toggle-pw" onclick="togglePw('cadSenha', this)" tabindex="-1"><i class="bi bi-eye"></i></button>
+    </div>
+    <div class="input-group mb-2">
+      <input id="cadConfirma" class="form-control" placeholder="Confirmar senha" type="password" autocomplete="new-password" />
+      <button class="toggle-pw" onclick="togglePw('cadConfirma', this)" tabindex="-1"><i class="bi bi-eye"></i></button>
+    </div>
+    <input id="cadCodigo" class="form-control mb-2" placeholder="Código de acesso" type="text" autocomplete="off" />
+    <div class="form-text mb-2" style="color:#a3791d;">A senha deve ter pelo menos 6 caracteres.<br>O cadastro só é permitido para pessoas autorizadas.</div>
+    <button class="btn btn-success w-100 mb-2" onclick="fazerCadastro()">Cadastrar</button>
+    <div id="msgCadastro" class="alert alert-danger mb-2" style="display:${msg ? '' : 'none'};">${msg}</div>
+    <div class="text-center small">
+      <span class="form-text-link" onclick="telaLogin()">Voltar</span>
+    </div>
+  `;
+}
+
+  function telaRedefinir(msg='') {
+    document.getElementById('authArea').innerHTML = `
+      <h5 class="text-center mb-3" style="color:#ad903f;">Redefinir Senha</h5>
+      <input id="resetEmail" class="form-control mb-3" placeholder="E-mail" type="email" autocomplete="email" />
+      <button class="btn btn-warning w-100 mb-2" onclick="redefinirSenha()">Enviar e-mail</button>
+      <div id="msgReset" class="alert alert-info mb-2" style="display:${msg ? '' : 'none'};">${msg}</div>
+      <div class="text-center small">
+        <span class="form-text-link" onclick="telaLogin()">Voltar</span>
+      </div>
+    `;
+  }
+  function telaGerenciar(user, msg='') {
+    document.getElementById('authArea').innerHTML = `
+      <h4 class="text-center mb-3" style="color:#a3791d;">Meu Perfil</h4>
+      <input id="editNome" class="form-control mb-2" placeholder="Nome" type="text" value="${user.displayName || ''}" autocomplete="name" />
+      <input id="editEmail" class="form-control mb-2" placeholder="E-mail" type="email" value="${user.email}" autocomplete="email" />
+      <input id="editSenha" class="form-control mb-2" placeholder="Nova senha (opcional)" type="password" autocomplete="new-password" />
+      <button class="btn btn-main w-100 mb-2" style="background:#c49d65;color:#fff;" onclick="atualizarPerfil()">Salvar alterações</button>
+      <div id="msgPerfil" class="alert alert-success mb-2" style="display:${msg ? '' : 'none'};">${msg}</div>
+      <div class="row">
+        <div class="col-6 pe-1">
+          <button class="btn btn-outline-primary w-100 mb-2" onclick="irParaIndex()"><i class="bi bi-house-door"></i> Ir para pedidos</button>
+        </div>
+        <div class="col-6 ps-1">
+          <button class="btn btn-outline-danger w-100 mb-2" onclick="deslogar()">Sair</button>
+        </div>
+      </div>
+    `;
+  }
+
+  // Alternar visibilidade senha
+  window.togglePw = function(id, btn){
+    const input = document.getElementById(id);
+    input.type = input.type === 'password' ? 'text' : 'password';
+    btn.innerHTML = `<i class="bi bi-eye${input.type === 'password' ? '' : '-slash'}"></i>`;
+  }
+
+  // Login
+  window.fazerLogin = function() {
+    const email = document.getElementById("loginEmail").value.trim();
+    const senha = document.getElementById("loginSenha").value.trim();
+    auth.signInWithEmailAndPassword(email, senha)
+      .catch(e => telaLogin(e.message.replace("Firebase:", ""), ''));
+  }
+
+  // Cadastro
+  window.fazerCadastro = function() {
+  const nome = document.getElementById("cadNome").value.trim();
+  const email = document.getElementById("cadEmail").value.trim();
+  const senha = document.getElementById("cadSenha").value.trim();
+  const confirma = document.getElementById("cadConfirma").value.trim();
+  const codigo = document.getElementById("cadCodigo").value.trim();
+  const CODIGO_CORRETO = "BONIDOCES"; // Troque por outro, se quiser!
+
+  if (!nome || !email || !senha || !confirma || !codigo)
+    return telaCadastro("Preencha todos os campos!");
+  if (senha.length < 6)
+    return telaCadastro("A senha deve ter pelo menos 6 caracteres.");
+  if (senha !== confirma)
+    return telaCadastro("As senhas não conferem!");
+  if (codigo !== CODIGO_CORRETO)
+    return telaCadastro("Código de acesso incorreto.");
+
+  auth.createUserWithEmailAndPassword(email, senha)
+    .then(userCred => {
+      userCred.user.updateProfile({ displayName: nome });
+      // Salva nome no Firestore também
+      firebase.firestore().collection("usuarios").doc(userCred.user.uid).set({
+        nome: nome,
+        email: email
+      }, { merge: true });
+    })
+    .catch(e => telaCadastro(e.message.replace("Firebase:", "")));
+}
+
+
+  // Redefinir senha
+  window.redefinirSenha = function() {
+    const email = document.getElementById("resetEmail").value.trim();
+    if(!email) return telaRedefinir("Digite seu e-mail.");
+    auth.sendPasswordResetEmail(email)
+      .then(() => telaRedefinir("E-mail de redefinição enviado!"))
+      .catch(e => telaRedefinir(e.message.replace("Firebase:", "")));
+  }
+
+  // Atualizar perfil
+  window.atualizarPerfil = function() {
+    const user = auth.currentUser;
+    if(!user) return;
+    const nome = document.getElementById("editNome").value.trim();
+    const email = document.getElementById("editEmail").value.trim();
+    const senha = document.getElementById("editSenha").value.trim();
+    const promises = [];
+    if(nome && nome !== user.displayName)
+      promises.push(user.updateProfile({ displayName: nome }));
+    if(email && email !== user.email)
+      promises.push(user.updateEmail(email));
+    if(senha)
+      promises.push(user.updatePassword(senha));
+    Promise.all(promises)
+      .then(() => telaGerenciar(auth.currentUser, "Perfil atualizado!"))
+      .catch(e => telaGerenciar(auth.currentUser, e.message.replace("Firebase:", "")));
+  }
+  // Sair
+  window.deslogar = function() {
+    auth.signOut().then(() => {
+      window.location.href = "auth.html?logout";
+    });
+  }
+
+  // Ir para pedidos (index.html)
+  window.irParaIndex = function() {
+    window.location.href = "index.html";
+  }
+
+  // Controle de tela por login e parâmetros
+  function renderAuth() {
+    const paramLogout = window.location.search.includes("logout");
+    const paramPerfil = window.location.search.includes("perfil");
+    auth.onAuthStateChanged(user => {
+      if (!user) {
+        if (paramLogout) {
+          telaLogin('', 'Sessão finalizada. Faça login novamente.');
+        } else {
+          telaLogin();
+        }
+      } else {
+        // Se veio com ?perfil ou está logado, abre direto tela de perfil
+        if (paramPerfil) {
+          telaGerenciar(user);
+        } else {
+          // Após login, vai para index.html
+          window.location.href = "index.html";
+        }
+      }
+    });
+  }
+  // Início
+  renderAuth();
+</script>
+<footer class="footer-app mt-4 text-center small text-muted">
+  <div class="container py-3 px-2">
+    <div class="fw-bold mb-1" style="color:#b29c7c;">DoceGestorExpress 2025 
+      <span class="mx-1">|</span>
+      <span class="versao-label">Versão <span style="color:#a3791d;">1.0.3</span></span>
+    </div>
+    <div class="mb-1" style="color:#786448;">
+      Desenvolvido por AllanTechCode &reg;
+    </div>
+    <div class="d-flex flex-column flex-md-row justify-content-center align-items-center gap-2">
+      <a
+        href="https://wa.me/5542991319374?text=Ol%C3%A1%2C%20vim%20pelo%20DoceGestorExpress%20e%20preciso%20de%20suporte!"
+        target="_blank"
+        class="btn btn-whatsapp-footer d-inline-flex align-items-center justify-content-center gap-2 px-3 py-1 my-1"
+        style="font-weight:600; font-size:1.07em;"
+        aria-label="Abrir WhatsApp"
+      >
+        <i class="bi bi-whatsapp" style="font-size:1.32em;"></i>
+        Suporte via WhatsApp
+      </a>
+    </div>
+    <div class="mt-1" style="font-size: 0.97em; color:#b6a67e;">
+      Uso exclusivo Boniele Doces
+    </div>
+  </div>
+</footer>
+</body>
+</html>

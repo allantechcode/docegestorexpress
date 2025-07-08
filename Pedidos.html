@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Selecionar Doces • DoceGestorExpress</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    body {
+      background: #f3f2f1;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      color: #4a3b28;
+    }
+    .selecionar-doces {
+      background: #fff;
+      border-radius: 16px;
+      max-width: 450px;
+      margin: 38px auto;
+      padding: 32px 22px 18px 22px;
+      box-shadow: 0 2px 16px #0002;
+    }
+    .header-logo {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    .header-logo img {
+      max-height: 55px;
+    }
+    h3 {
+      color: #c49d65;
+      text-align: center;
+      margin-bottom: 18px;
+      font-size: 1.3rem;
+      letter-spacing: 1px;
+    }
+    label {
+      font-weight: 500;
+      font-size: 1.04em;
+      margin-bottom: 4px;
+      display: block;
+      color: #604126;
+      margin-top: 6px;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 9px 10px;
+      margin-bottom: 11px;
+      border-radius: 6px;
+      border: 1px solid #c49d65;
+      font-size: 1rem;
+      color: #4a3b28;
+    }
+    .tipo-pedido-container {
+      margin-bottom: 15px;
+    }
+    .tipo-pedido-container label {
+      font-weight: 400;
+      margin-right: 16px;
+      color: #604126;
+    }
+    .tipo-pedido-container input[type="radio"] {
+      accent-color: #c49d65;
+      margin-right: 4px;
+      vertical-align: middle;
+    }
+    .grupo h4 {
+      margin: 18px 0 10px 0;
+      color: #604126;
+      font-size: 1.07rem;
+      letter-spacing: .5px;
+    }
+    .item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 7px;
+      padding: 6px 0;
+    }
+    .item-nome {
+      flex: 1;
+      font-size: 1rem;
+    }
+    .item-controls {
+      display: flex;
+      align-items: center;
+      min-width: 130px;
+      justify-content: flex-end;
+    }
+    .item button {
+      background: #c49d65;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 1.15rem;
+      width: 31px;
+      height: 31px;
+      margin: 0 4px;
+      cursor: pointer;
+      transition: background .2s;
+      font-weight: bold;
+    }
+    .item button:disabled {
+      background: #eee;
+      color: #b9b9b9;
+      cursor: not-allowed;
+    }
+    .item button:hover:not(:disabled) {
+      background: #a6844c;
+    }
+    .quantidade {
+      font-weight: bold;
+      font-size: 1.08rem;
+      color: #604126;
+      width: 30px;
+      text-align: center;
+      display: inline-block;
+    }
+    .item-valor-total {
+      min-width: 60px;
+      text-align: right;
+      color: #c49d65;
+      font-weight: 500;
+      font-size: .97rem;
+      margin-left: 8px;
+    }
+    .total-container {
+      margin: 26px 0 12px 0;
+      text-align: right;
+      font-size: 1.13rem;
+      color: #604126;
+    }
+    .adicionar-pedido {
+      width: 100%;
+      background: #604126;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 13px 0;
+      font-size: 1.12rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background .2s;
+      letter-spacing: .5px;
+    }
+    .adicionar-pedido:disabled {
+      background: #e2e2e2;
+      color: #a49d65;
+      cursor: not-allowed;
+    }
+    .adicionar-pedido:hover:not(:disabled) {
+      background: #c49d65;
+      color: #604126;
+    }
+    .disabled-section {
+      opacity: 0.45;
+      pointer-events: none;
+    }
+    .erro-msg {
+      color: #c0353e;
+      text-align: center;
+      font-size: 1.01em;
+      margin-bottom: 10px;
+      display: none;
+    }
+    @media (max-width: 540px) {
+      .selecionar-doces {
+        max-width: 98vw;
+        padding: 13px 2vw;
+      }
+      .header-logo img {
+        max-height: 38px;
+      }
+      .item-controls {
+        min-width: 100px;
+      }
+      
+      .copiar-pedido {
+        width: 100%;
+        background: #c49d65;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 12px 0;
+        font-size: 1.10rem;
+        font-weight: 600;
+        cursor: pointer;
+        margin-top: 8px;
+        transition: background .2s;
+        letter-spacing: .5px;
+        }
+        .copiar-pedido:disabled {
+        background: #e2e2e2;
+        color: #a49d65;
+        cursor: not-allowed;
+        }
+        .copiar-pedido:hover:not(:disabled) {
+        background: #604126;
+        color: #fff;
+        }
+
+
+
+
+    }
+  </style>
+</head>
+<body>
+  <div class="selecionar-doces">
+    <div class="header-logo">
+      <img src="Logo Clean.png" alt="Dubai Doces Logo"/>
+    </div>
+    <h3>Selecionar Doces</h3>
+    <label for="nomeCliente">Nome:</label>
+    <input type="text" id="nomeCliente" placeholder="Digite o nome..." autocomplete="off">
+
+    <div class="tipo-pedido-container">
+      <label><input type="radio" name="tipoPedido" value="30"> Caixa de 30</label>
+      <label><input type="radio" name="tipoPedido" value="49"> Caixa de 49</label>
+      <label><input type="radio" name="tipoPedido" value="avulso"> Avulso</label>
+    </div>
+    <div class="erro-msg" id="erroTipo"></div>
+
+    <div id="docesSection" class="disabled-section">
+      <!-- Grupos e sabores -->
+      <div class="grupo" data-grupo="TRADICIONAL">
+        <h4>🍬 Tradicional <span style="font-weight:400;font-size:.98em;">– R$6,00</span></h4>
+        <div class="item" data-preco="6"><span class="item-nome">Beijinho</span><div class="item-controls"><button class="menos">-</button><span class="quantidade">0</span><button class="mais">+</button><span class="item-valor-total">R$0,00</span></div></div>
+        <div class="item" data-preco="6"><span class="item-nome">Bombom de nozes branco</span><div class="item-controls"><button class="menos">-</button><span class="quantidade">0</span><button class="mais">+</button><span class="item-valor-total">R$0,00</span></div></div>
+        <div class="item" data-preco="6"><span class="item-nome">Bombom de uva</span><div class="item-controls"><button class="menos">-</button><span class="quantidade">0</span><button class="mais">+</button><span class="item-valor-total">R$0,00</span></div></div>
+        <div class="item" data-preco="6"><span class="item-nome">Bombom de cereja branco</span><div class="item-controls"><button class="menos">-</button><span class="quantidade">0</span><button class="mais">+</button><span class="item-valor-total">R$0,00</span></div></div>
+        <div class="item" data-preco="6"><span class="item-nome">Brigadeiro de confete</span><div class="item-controls"><button class="menos">-</button><span class="quantidade">0</span><button class="mais">+</button><span class="item-valor-total">R$0,00</span></div></div>
+        <div class="item" data-preco="6"><span class="item-nome">Cacau 50%</span><div class="item-controls"><button class="menos">-</button><span class="quantidade">0</span><button class="mais">+</button><span class="item-valor-total">R$0,00</span></div></div>
+        <div class="item" data-preco="6"><span class="item-nome">Brigadeiro</span><div class="item-controls"><button class="menos">-</button><span class="quantidade">0</span><button class="mais">+</button><span class="item-valor-total">R$0,00</span></div></div>
+        <div class="item" data-preco="6"><span class="item-nome">Castanha</span><div class="item-controls"><button class="menos">-</button><span class="quantidade">0</span><button class="mais">+</button><span class="item-valor-total">R$0,00</span></div></div>
+        <div class="item" data-preco="6"><span class="item-nome">Chocoboll</span><div class="item-controls"><button class="menos">-</button><span class="quantidade">0</span><button class="mais">+</button><span class="item-valor-total">R$0,00</span></div></div>
+        <div class="item" data-preco="6"><span class="item-nome">Damasco</span><div class="item-controls"><button class="menos">-</button><span class="quantidade">0</span><button class="mais">+</button><span class="item-valor-total">R$0,00</span></div></div>
+        <div class="item" data-preco="6"><span class="item-nome">Leite ninho com Nutella</span><div class="item-controls"><button class="menos">-</button><span class="quantidade">0</span><button class="mais">+</button><span class="item-valor-total">R$0,00</span></div></div>
+        <div class="item" data-preco="6"><span class="item-nome">Olho de sogra</span><div class="item-controls"><button class="menos">-</button><span class="quantidade">0</span><button class="mais">+</button><span class="item-valor-total">R$0,00</span></div></div>
+        <div class="item" data-preco="6"><span class="item-nome">Pé de moça</span><div class="item-controls"><button class="menos">-</button><span class="quantidade">0</span><button class="mais">+</button><span class="item-valor-total">R$0,00</span></div></div>
+        <div class="item" data-preco="6"><span class="item-nome">Casadinho</span><div class="item-controls"><button class="menos">-</button><span class="quantidade">0</span><button class="mais">+</button><span class="item-valor-total">R$0,00</span></div></div>
+        <div class="item" data-preco="6"><span class="item-nome">Charge</span><div class="item-controls"><button class="menos">-</button><span class="quantidade">0</span><button class="mais">+</button><span class="item-valor-total">R$0,00</span></div></div>
+        <div class="item" data-preco="6"><span class="item-nome">Coco queimado</span><div class="item-controls"><button class="menos">-</button><span class="quantidade">0</span><button class="mais">+</button><span class="item-valor-total">R$0,00</span></div></div>
+        <div class="item" data-preco="6"><span class="item-nome">Laka</span><div class="item-controls"><button class="menos">-</button><span class="quantidade">0</span><button class="mais">+</button><span class="item-valor-total">R$0,00</span></div></div>
+        <div class="item" data-preco="6"><span class="item-nome">Paçoca</span><div class="item-controls"><button class="menos">-</button><span class="quantidade">0</span><button class="mais">+</button><span class="item-valor-total">R$0,00</span></div></div>
+        <div class="item" data-preco="6"><span class="item-nome">Prestígio</span><div class="item-controls"><button class="menos">-</button><span class="quantidade">0</span><button class="mais">+</button><span class="item-valor-total">R$0,00</span></div></div>
+      </div>
+      <div class="grupo" data-grupo="TRUFADO">
+        <h4>🍫 Trufado <span style="font-weight:400;font-size:.98em;">– R$6,00</span></h4>
+        <div class="item" data-preco="6"><span class="item-nome">Amarula</span><div class="item-controls"><button class="menos">-</button><span class="quantidade">0</span><button class="mais">+</button><span class="item-valor-total">R$0,00</span></div></div>
+        <div class="item" data-preco="6"><span class="item-nome">Bombom de cereja preto</span><div class="item-controls"><button class="menos">-</button><span class="quantidade">0</span><button class="mais">+</button><span class="item-valor-total">R$0,00</span></div></div>
+        <div class="item" data-preco="6"><span class="item-nome">Café</span><div class="item-controls"><button class="menos">-</button><span class="quantidade">0</span><button class="mais">+</button><span class="item-valor-total">R$0,00</span></div></div>
+        <div class="item" data-preco="6"><span class="item-nome">Ferreiro Roche</span><div class="item-controls"><button class="menos">-</button><span class="quantidade">0</span><button class="mais">+</button><span class="item-valor-total">R$0,00</span></div></div>
+        <div class="item" data-preco="6"><span class="item-nome">Ferreiro Roche branco</span><div class="item-controls"><button class="menos">-</button><span class="quantidade">0</span><button class="mais">+</button><span class="item-valor-total">R$0,00</span></div></div>
+        <div class="item" data-preco="6"><span class="item-nome">Rum</span><div class="item-controls"><button class="menos">-</button><span class="quantidade">0</span><button class="mais">+</button><span class="item-valor-total">R$0,00</span></div></div>
+        <div class="item" data-preco="6"><span class="item-nome">Maracujá com belga</span><div class="item-controls"><button class="menos">-</button><span class="quantidade">0</span><button class="mais">+</button><span class="item-valor-total">R$0,00</span></div></div>
+      </div>
+      <div class="grupo" data-grupo="MORANGO">
+        <h4>🍓 Morango <span style="font-weight:400;font-size:.98em;">– R$7,00</span></h4>
+        <div class="item" data-preco="7"><span class="item-nome">Bombom de morango invertido</span><div class="item-controls"><button class="menos">-</button><span class="quantidade">0</span><button class="mais">+</button><span class="item-valor-total">R$0,00</span></div></div>
+        <div class="item" data-preco="7"><span class="item-nome">Bombom de morango</span><div class="item-controls"><button class="menos">-</button><span class="quantidade">0</span><button class="mais">+</button><span class="item-valor-total">R$0,00</span></div></div>
+        <div class="item" data-preco="7"><span class="item-nome">Morango afundado no beijinho</span><div class="item-controls"><button class="menos">-</button><span class="quantidade">0</span><button class="mais">+</button><span class="item-valor-total">R$0,00</span></div></div>
+        <div class="item" data-preco="7"><span class="item-nome">Morango afundado no brigadeiro</span><div class="item-controls"><button class="menos">-</button><span class="quantidade">0</span><button class="mais">+</button><span class="item-valor-total">R$0,00</span></div></div>
+      </div>
+      <div class="grupo" data-grupo="MORANGO COM PISTACHE">
+        <h4>🥜 Morango com Pistache <span style="font-weight:400;font-size:.98em;">– R$7,00</span></h4>
+        <div class="item" data-preco="7"><span class="item-nome">Morango afundado no pistache</span><div class="item-controls"><button class="menos">-</button><span class="quantidade">0</span><button class="mais">+</button><span class="item-valor-total">R$0,00</span></div></div>
+      </div>
+      <div class="total-container">
+        <strong>Total selecionado: <span id="totalSelecionado">0</span> – Valor total: <span id="valorTotalPedido">R$0,00</span></strong>
+        <button class="copiar-pedido" id="copiarPedidoBtn" disabled>Copiar Pedido</button>
+
+      </div>
+    </div>
+    <button class="adicionar-pedido" id="adicionarPedidoBtn" disabled>Adicionar ao Pedido</button>
+<div id="resumoPedidoFinal" style="margin-top:30px; background:#f9f9f9; border-radius:10px; padding:20px; display:none;">
+  <h4 style="margin-bottom:10px; color:#604126;">Resumo do Pedido</h4>
+  <pre id="resumoVisual" style="white-space:pre-wrap; font-size:0.95rem; color:#333;"></pre>
+  <button class="copiar-pedido" id="copiarResumoBtn">Copiar Pedido</button>
+  <button class="adicionar-pedido" id="recomecarBtn" style="margin-top:8px;">Recomeçar</button>
+</div>
+
+  </div>
+  <script>
+    let maxUnidades = null;
+    let tipoSelecionado = null;
+    let bloqueioTrocaTipo = false;
+    const docesSection = document.getElementById('docesSection');
+    const totalSelecionadoSpan = document.getElementById('totalSelecionado');
+    const adicionarPedidoBtn = document.getElementById('adicionarPedidoBtn');
+    const erroTipo = document.getElementById('erroTipo');
+    const nomeCliente = document.getElementById('nomeCliente');
+    let ultimoTipo = null;
+
+    // Função para somar total selecionado
+    function updateTotal() {
+      let total = 0;
+      document.querySelectorAll('.quantidade').forEach(span => {
+        total += parseInt(span.textContent, 10);
+      });
+      totalSelecionadoSpan.textContent = total;
+      return total;
+    }
+
+    // Função para atualizar totais individuais de cada item
+    function updateValoresTotais() {
+      document.querySelectorAll('.item').forEach(item => {
+        const quantidade = parseInt(item.querySelector('.quantidade').textContent, 10);
+        const preco = parseFloat(item.getAttribute('data-preco'));
+        const valorTotal = quantidade * preco;
+        item.querySelector('.item-valor-total').textContent = `R$${valorTotal.toFixed(2).replace('.',',')}`;
+      });
+    }
+
+    // Habilita/desabilita botões conforme regra da caixa
+    function atualizaEstadoBotoes() {
+  const total = updateTotal();
+  
+  // Calcula valor total em dinheiro
+  let valorTotal = 0;
+  document.querySelectorAll('.item').forEach(item => {
+    const quantidade = parseInt(item.querySelector('.quantidade').textContent, 10);
+    const preco = parseFloat(item.getAttribute('data-preco'));
+    valorTotal += quantidade * preco;
+  });
+
+  // Atualiza o valor total na interface
+  document.getElementById('valorTotalPedido').textContent = `R$${valorTotal.toFixed(2).replace('.', ',')}`;
+
+  document.querySelectorAll('.item').forEach(item => {
+    const quantidade = parseInt(item.querySelector('.quantidade').textContent, 10);
+    // Mais
+    const mais = item.querySelector('.mais');
+    mais.disabled = (maxUnidades !== null && total >= maxUnidades);
+    // Menos
+    const menos = item.querySelector('.menos');
+    menos.disabled = quantidade <= 0;
+  });
+  
+  updateValoresTotais();
+  adicionarPedidoBtn.disabled = (total === 0 || nomeCliente.value.trim() === "");
+}
+
+    // Troca tipo de pedido
+    document.querySelectorAll('input[name="tipoPedido"]').forEach(radio => {
+      radio.addEventListener('change', function() {
+        if(bloqueioTrocaTipo) return;
+        tipoSelecionado = this.value;
+        if(tipoSelecionado === '30') maxUnidades = 30;
+        else if(tipoSelecionado === '49') maxUnidades = 49;
+        else maxUnidades = null;
+        // Se já havia doces selecionados, zera todos
+        const total = updateTotal();
+        if(total > 0) {
+          bloqueioTrocaTipo = true;
+          document.querySelectorAll('.quantidade').forEach(span => span.textContent = "0");
+          updateValoresTotais();
+          setTimeout(() => {
+            bloqueioTrocaTipo = false;
+            atualizaEstadoBotoes();
+          }, 100); // leve delay para garantir update
+        } else {
+          atualizaEstadoBotoes();
+        }
+        // Habilita área de doces
+        docesSection.classList.remove('disabled-section');
+        erroTipo.style.display = "none";
+      });
+    });
+
+    // Nome do cliente: ativa botão adicionar
+    nomeCliente.addEventListener('input', atualizaEstadoBotoes);
+
+    // Botões + e -
+    document.querySelectorAll('.item').forEach(item => {
+      const menos = item.querySelector('.menos');
+      const mais = item.querySelector('.mais');
+      const quantidade = item.querySelector('.quantidade');
+      menos.addEventListener('click', () => {
+        let q = parseInt(quantidade.textContent, 10);
+        if(q > 0) quantidade.textContent = q - 1;
+        atualizaEstadoBotoes();
+      });
+      mais.addEventListener('click', () => {
+        let q = parseInt(quantidade.textContent, 10);
+        if(maxUnidades !== null && updateTotal() >= maxUnidades) return;
+        quantidade.textContent = q + 1;
+        atualizaEstadoBotoes();
+      });
+    });
+
+    // Botão adicionar pedido
+    adicionarPedidoBtn.addEventListener('click', function() {
+      const total = updateTotal();
+      if(tipoSelecionado === null) {
+        erroTipo.textContent = "Escolha o tipo de pedido!";
+        erroTipo.style.display = "block";
+        return;
+      }
+      if(nomeCliente.value.trim() === "") {
+        erroTipo.textContent = "Digite o nome!";
+        erroTipo.style.display = "block";
+        return;
+      }
+      if(total === 0) {
+        erroTipo.textContent = "Adicione pelo menos 1 doce ao pedido!";
+        erroTipo.style.display = "block";
+        return;
+      }
+      erroTipo.style.display = "none";
+      alert('Pedido adicionado com sucesso!\nEm breve enviaremos para o sistema :)');
+    });
+
+    const copiarPedidoBtn = document.getElementById('copiarPedidoBtn');
+let resumoFinal = "";
+
+adicionarPedidoBtn.addEventListener('click', function() {
+  const total = updateTotal();
+  const nome = nomeCliente.value.trim();
+
+  if(tipoSelecionado === null) {
+    erroTipo.textContent = "Escolha o tipo de pedido!";
+    erroTipo.style.display = "block";
+    return;
+  }
+  if(nome === "") {
+    erroTipo.textContent = "Digite o nome!";
+    erroTipo.style.display = "block";
+    return;
+  }
+  if(total === 0) {
+    erroTipo.textContent = "Adicione pelo menos 1 doce ao pedido!";
+    erroTipo.style.display = "block";
+    return;
+  }
+
+  erroTipo.style.display = "none";
+
+  // Monta o resumo do pedido
+  resumoFinal = `Nome: ${nome}\n`;
+  resumoFinal += `Tipo de Pedido: ${tipoSelecionado === 'avulso' ? 'Avulso' : 'Caixa de ' + tipoSelecionado}\n\n`;
+  resumoFinal += "Doces:\n";
+
+  document.querySelectorAll('.item').forEach(item => {
+    const quantidade = parseInt(item.querySelector('.quantidade').textContent, 10);
+    if(quantidade > 0){
+      const nomeDoce = item.querySelector('.item-nome').textContent;
+      const precoUnitario = parseFloat(item.getAttribute('data-preco'));
+      const valorTotalItem = quantidade * precoUnitario;
+      resumoFinal += `- ${nomeDoce}: ${quantidade} unid. (R$${valorTotalItem.toFixed(2).replace('.', ',')})\n`;
+    }
+  });
+
+  // valor total
+  const valorTotalPedido = document.getElementById('valorTotalPedido').textContent;
+  resumoFinal += `\nTotal de doces: ${total}\n`;
+  resumoFinal += `Valor Total: ${valorTotalPedido}`;
+
+  const agora = new Date().toLocaleString('pt-BR');
+resumoFinal = `Nome: ${nome}\nData/Hora: ${agora}\n` + resumoFinal.slice(resumoFinal.indexOf('Tipo'));
+// Substitui o alert por resumo visual
+document.getElementById('resumoPedidoFinal').style.display = "block";
+document.getElementById('resumoVisual').textContent = resumoFinal;
+
+// Botão copiar novo
+document.getElementById('copiarResumoBtn').onclick = () => {
+  navigator.clipboard.writeText(resumoFinal).then(() => {
+    document.getElementById('copiarResumoBtn').textContent='✔️ Copiado!';
+    setTimeout(() => document.getElementById('copiarResumoBtn').textContent='Copiar Pedido', 2000);
+  });
+};
+
+// Botão recomeçar
+document.getElementById('recomecarBtn').onclick = () => {
+  document.getElementById('nomeCliente').value = '';
+  document.querySelectorAll('input[name="tipoPedido"]').forEach(r => r.checked = false);
+  document.querySelectorAll('.quantidade').forEach(q => q.textContent = '0');
+  document.getElementById('valorTotalPedido').textContent = 'R$0,00';
+  document.getElementById('totalSelecionado').textContent = '0';
+  document.getElementById('resumoPedidoFinal').style.display = 'none';
+  copiarPedidoBtn.disabled = true;
+  docesSection.classList.add('disabled-section');
+  atualizaEstadoBotoes();
+};
+ 
+
+  // Habilita botão copiar pedido após gerar resumo
+  copiarPedidoBtn.disabled = false;
+});
+
+// Função copiar pedido para área de transferência
+copiarPedidoBtn.addEventListener('click', function() {
+  if(resumoFinal === "") return;
+
+  navigator.clipboard.writeText(resumoFinal).then(() => {
+    copiarPedidoBtn.textContent = "✔️ Pedido Copiado!";
+    setTimeout(() => {
+      copiarPedidoBtn.textContent = "Copiar Pedido";
+    }, 2000);
+  }).catch(() => {
+    alert("Erro ao copiar! Copie manualmente o texto abaixo:\n\n" + resumoFinal);
+  });
+});
+
+// Reiniciar botão copiar pedido ao mudar dados
+nomeCliente.addEventListener('input', () => copiarPedidoBtn.disabled = true);
+document.querySelectorAll('input[name="tipoPedido"]').forEach(radio => {
+  radio.addEventListener('change', () => copiarPedidoBtn.disabled = true);
+});
+document.querySelectorAll('.mais, .menos').forEach(btn => {
+  btn.addEventListener('click', () => copiarPedidoBtn.disabled = true);
+});
+
+
+    // Inicialização
+    docesSection.classList.add('disabled-section');
+    atualizaEstadoBotoes();
+
+  </script>
+</body>
+</html>

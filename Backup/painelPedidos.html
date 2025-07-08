@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>Painel de Pedidos - DoceGestorExpress</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="favicon.ico" type="image/x-icon" />
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px 30px 40px 30px;
+      background: #f9f9f9;
+    }
+    h2 {
+      text-align: center;
+      color: #4CAF50;
+      margin-bottom: 20px;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 10px;
+      font-family: Arial, sans-serif;
+      font-size: 0.9rem;
+      color: #444;
+      margin-bottom: 20px;
+    }
+    header button {
+      padding: 4px 10px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      background: #eee;
+    }
+    #filtroStatus {
+      width: 200px;
+      padding: 8px;
+      margin-bottom: 20px;
+      font-size: 1rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    #loadingIndicator {
+      text-align: center;
+      margin: 20px 0;
+      font-weight: bold;
+      color: #604126;
+      display: none;
+    }
+    .pedido {
+      background: #fff;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      margin-bottom: 15px;
+      display: flex;
+      align-items: flex-start;
+      gap: 15px;
+    }
+    .checkbox-col {
+      flex-shrink: 0;
+    }
+    .conteudo-col {
+      flex-grow: 1;
+    }
+    .status-tag {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: white;
+      text-transform: uppercase;
+    }
+    .pendente { background-color: orange; }
+    .aprovado { background-color: #03a9f4; }
+    .concluido { background-color: #4CAF50; }
+    .detalhes {
+      display: none;
+      margin-top: 10px;
+      background: #f1f1f1;
+      padding: 10px;
+      border-left: 3px solid #4CAF50;
+      border-radius: 6px;
+      white-space: normal;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 6px;
+    }
+    thead tr {
+      background: #604126;
+      color: #fff;
+    }
+    th, td {
+      padding: 6px;
+      border-bottom: 1px solid #ddd;
+      text-align: left;
+    }
+    button {
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: none;
+      background: #604126;
+      color: white;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    select.status-select {
+      margin-left: 10px;
+      padding: 3px 6px;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+    #paginacao {
+      text-align: center;
+      margin-top: 20px;
+    }
+    .page-btn {
+      margin: 0 5px;
+      cursor: pointer;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+    }
+    .page-btn:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+    #resumoContainer {
+      margin-top: 25px;
+      background: #fff;
+      border-radius: 8px;
+      padding: 15px;
+      box-shadow: 0 2px 8px rgb(0 0 0 / 0.1);
+      white-space: pre-wrap;
+      font-family: monospace;
+      color: #333;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    #alertaAcesso {
+      text-align: center;
+      color: #c00;
+      font-weight: bold;
+      margin-top: 50px;
+    }
+  </style>
+</head>
+<body>
+  <header style="display: flex; align-items: center; justify-content: space-between; padding: 10px 0; font-family: Arial, sans-serif; color: #5c3a00;">
+    <h2 style="display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 1.8rem; color: #5c3a00; margin: 0;">
+      <!-- Ícone checkbox verde -->
+      <svg xmlns="http://www.w3.org/2000/svg" height="28" width="28" fill="#8BC34A" viewBox="0 0 24 24">
+        <path d="M20.285 6.709l-11.39 11.39-5.18-5.18 1.414-1.414 3.766 3.766 9.976-9.976z"/>
+      </svg>
+      Painel de Pedidos
+    </h2>
+    <div id="usuarioInfo" style="font-size: 0.9rem; color: #5c3a00; display: flex; align-items: center; gap: 12px;">
+      <stronger id="usuarioLogado">Usuário</stronger>
+      <button id="btnSair" style="background:none; border:none; padding:0; font-weight: 700; color: #5c3a00; cursor: pointer; text-decoration: underline;">
+        Sair
+      </button>
+    </div>
+  </header>
+  
+
+  <div style="text-align: left; margin-bottom: 10px;">
+    <select id="filtroStatus" title="Filtrar por status" style="display: inline-block;">
+      <label for="filtroStatus"><strong>Filtrar por status:</strong></label>
+      <option value="PENDENTE" selected>PENDENTE</option>
+      <option value="APROVADO">APROVADO</option>
+      <option value="CONCLUIDO">CONCLUÍDO</option>
+      <option value="TODOS">TODOS</option>
+    </select>
+  </div>
+
+  <div id="loadingIndicator">Carregando pedidos, aguarde...</div>
+  <div id="listaPedidos"></div>
+  <div id="paginacao"></div>
+
+  <div id="resumoContainer" style="display:none;">
+    <h3>Pedidos Boniele</h3>
+    <pre id="resumoText">Nenhum pedido selecionado.</pre>
+    <button id="copiarResumoBtn">Copiar Resumo</button>
+  </div>
+
+  <div id="alertaAcesso" style="display:none;">
+    Você não tem permissão para acessar esta página.
+  </div>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBaeSVaAa8RoX_dYW8_YKxY7naw9vq8OX8",
+    authDomain: "docepedidoexpress.firebaseapp.com",
+    projectId: "docepedidoexpress",
+    storageBucket: "docepedidoexpress.firebasestorage.app",
+    messagingSenderId: "599415242749",
+    appId: "1:599415242749:web:e2b4ad85d82aef617ba394"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  let pedidosTodos = [];
+  let paginaAtual = 1;
+  const porPagina = 10;
+
+  // Mostra usuário e configura botão sair
+  auth.onAuthStateChanged(user => {
+    if (!user) {
+      document.body.innerHTML = "<p style='text-align:center;color:#c00;'>Você precisa estar logado para acessar este painel.</p>";
+      return;
+    }
+
+    if (user.email !== "boni.palhano@gmail.com") {
+      document.getElementById("alertaAcesso").style.display = "block";
+      document.getElementById("filtroStatus").style.display = "none";
+      return;
+    }
+
+    document.getElementById("usuarioLogado").textContent = `Usuário "${user.displayName || user.email}"`;
+
+    document.getElementById("btnSair").addEventListener("click", () => {
+      auth.signOut().then(() => {
+        window.location.href = "index.html";
+      });
+    });
+
+    carregarTodosPedidos();
+  });
+
+  function carregarTodosPedidos() {
+    const loading = document.getElementById("loadingIndicator");
+    loading.style.display = "block";
+
+    db.collection("pedidos")
+      .get()
+      .then(snapshot => {
+        pedidosTodos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        pedidosTodos.sort((a, b) => {
+          function parseDataHora(str) {
+            if (!str) return 0;
+            const [data, hora] = str.split(' ');
+            const [dia, mes, ano] = data.split('/');
+            return new Date(`${ano}-${mes}-${dia}T${hora}`);
+          }
+          return parseDataHora(b.dataHora) - parseDataHora(a.dataHora);
+        });
+        carregarPedidos();
+      })
+      .catch(error => {
+        document.getElementById("listaPedidos").innerHTML =
+          "<p style='color:red;'>Erro ao carregar pedidos: " + error.message + "</p>";
+      })
+      .finally(() => {
+        loading.style.display = "none";
+      });
+  }
+
+  function carregarPedidos() {
+    const statusSelecionado = document.getElementById("filtroStatus").value;
+    let pedidosFiltrados = pedidosTodos;
+
+    if (statusSelecionado !== "TODOS") {
+      pedidosFiltrados = pedidosTodos.filter(p => p.status === statusSelecionado);
+    }
+
+    // Ordenar pedidos filtrados por numeroPedido desc (maior para menor)
+    pedidosFiltrados.sort((a, b) => {
+      const numA = a.numeroPedido || 0;
+      const numB = b.numeroPedido || 0;
+      return numB - numA;
+    });
+
+    const inicio = (paginaAtual - 1) * porPagina;
+    const fim = inicio + porPagina;
+    const pedidosPagina = pedidosFiltrados.slice(inicio, fim);
+
+    const container = document.getElementById("listaPedidos");
+    container.innerHTML = "";
+
+    pedidosPagina.forEach((pedido, i) => {
+      const div = document.createElement("div");
+      div.className = "pedido";
+      const statusClass = pedido.status ? pedido.status.toLowerCase() : "";
+      div.innerHTML = `
+        <div class="checkbox-col">
+          <input type="checkbox" class="checkbox-pedido" data-id="${pedido.id}">
+        </div>
+        <div class="conteudo-col">
+          <span class="status-tag ${statusClass}">${pedido.status || "SEM STATUS"}</span>
+          <select class="status-select" data-id="${pedido.id}">
+            <option value="PENDENTE" ${pedido.status === "PENDENTE" ? "selected" : ""}>PENDENTE</option>
+            <option value="APROVADO" ${pedido.status === "APROVADO" ? "selected" : ""}>APROVADO</option>
+            <option value="CONCLUIDO" ${pedido.status === "CONCLUIDO" ? "selected" : ""}>CONCLUÍDO</option>
+          </select>
+          <br>
+          <strong>${pedido.DisplayName || pedido.nome || "Sem Nome"}</strong><br>
+          <strong>Pedido #${pedido.numeroPedido || "?"}</strong><br>
+          <strong>Data/Hora:</strong> ${pedido.dataHora || "Sem Data"}<br>
+          <strong>Tipo de Caixa:</strong> ${pedido.caixa || pedido.tipoPedido || "Não informado"}<br>
+          <strong>Quantidade de Caixas:</strong> ${pedido.quantidadeCaixas || 1}<br>
+          <strong>Valor Cliente:</strong> ${pedido.valorTotal || 1}<br>
+          <button onclick="mostrarDetalhes('${pedido.id}')">Detalhes</button>
+          <button onclick="excluirPedido('${pedido.id}')"
+            style="background-color: #c00; margin-left: 10px;">Excluir</button>
+          <div class="detalhes" id="detalhes-${pedido.id}">
+            <table>
+              <thead>
+                <tr>
+                  <th>Quantidade</th>
+                  <th>Doce</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${pedido.doces.map(d => `
+                  <tr>
+                    <td>${d.quantidade}</td>
+                    <td>${d.nome}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+            <br><strong>Total de Doces:</strong> ${pedido.totalDoces || 0}
+          </div>
+        </div>
+      `;
+      container.appendChild(div);
+    });
+
+    document.querySelectorAll(".checkbox-pedido").forEach(cb => {
+      cb.addEventListener("change", atualizarResumoSelecionado);
+    });
+
+    document.querySelectorAll(".status-select").forEach(sel => {
+      sel.addEventListener("change", e => {
+        const pedidoId = e.target.dataset.id;
+        const novoStatus = e.target.value;
+
+        db.collection("pedidos").doc(pedidoId).update({ status: novoStatus })
+          .then(() => {
+            const idx = pedidosTodos.findIndex(p => p.id === pedidoId);
+            if (idx >= 0) {
+              pedidosTodos[idx].status = novoStatus;
+              carregarPedidos();
+            }
+          })
+          .catch(err => {
+            alert("Erro ao alterar status: " + err.message);
+            carregarPedidos();
+          });
+      });
+    });
+
+    renderPaginacao(pedidosFiltrados.length);
+  }
+
+  function mostrarDetalhes(id) {
+    const el = document.getElementById("detalhes-" + id);
+    el.style.display = el.style.display === "block" ? "none" : "block";
+  }
+
+  function atualizarResumoSelecionado() {
+    const checkboxes = Array.from(document.querySelectorAll(".checkbox-pedido"));
+    const selecionados = checkboxes.filter(cb => cb.checked).map(cb => cb.dataset.id);
+
+    if (selecionados.length === 0) {
+      document.getElementById("resumoContainer").style.display = "none";
+      return;
+    }
+
+    const valoresCusto = {
+      tradicional: 4.50,
+      trufado: 5.00,
+      morango: 5.50,
+      'morango pistache': 6.00
+    };
+
+    const docesGrupos = {
+      'brigadeiro': 'trufado',
+      'beijinho': 'tradicional',
+      'bombom de nozes branco': 'tradicional',
+      'bombom de nozes preto': 'tradicional',
+      'bombom de uva': 'tradicional',
+      'bombom de cereja branco': 'tradicional',
+      'brigadeiro de confete': 'tradicional',
+      'cacau 50%': 'tradicional',
+      'castanha': 'tradicional',
+      'chocoboll': 'tradicional',
+      'damasco': 'tradicional',
+      'leite ninho com nutella': 'tradicional',
+      'olho de sogra': 'tradicional',
+      'pé de moça': 'tradicional',
+      'casadinho': 'tradicional',
+      'charge': 'tradicional',
+      'coco queimado': 'tradicional',
+      'laka': 'tradicional',
+      'paçoca': 'tradicional',
+      'prestígio': 'tradicional',
+      'amarula': 'trufado',
+      'bombom de cereja preto': 'trufado',
+      'café': 'trufado',
+      'ferreiro roche': 'trufado',
+      'ferreiro roche branco': 'trufado',
+      'rum': 'trufado',
+      'maracujá com belga': 'trufado',
+      'bombom de morango invertido': 'morango',
+      'bombom de morango': 'morango',
+      'morango afundado no beijinho': 'morango',
+      'morango afundado no brigadeiro': 'morango',
+      'morango afundado no pistache': 'morango pistache'
+    };
+
+    let textoResumo = "";
+    let valorTotalGeral = 0;
+    let qtdCaixas30 = 0;
+    let qtdCaixas49 = 0;
+
+    selecionados.forEach(id => {
+      
+      const pedido = pedidosTodos.find(p => p.id === id);
+      if (!pedido) return;
+
+      // Calcular valor de custo do pedido
+      let valorCustoPedido = 0;
+      const qtdCaixas = pedido.quantidadeCaixas || 1;
+      const tipoCaixa = pedido.caixa || "";
+      if (tipoCaixa.includes("30")) {
+        qtdCaixas30 += qtdCaixas;
+      } else if (tipoCaixa.includes("49")) {
+        qtdCaixas49 += qtdCaixas;
+      }
+      textoResumo += `Total caixas de 30: ${qtdCaixas30}\n`;
+      textoResumo += `Total caixas de 49: ${qtdCaixas49}\n\n`;
+
+      textoResumo += `Vendedor: ${pedido.DisplayName || pedido.nome || "Sem Vendedor"}\n`;
+      textoResumo += `Data/Hora: ${pedido.dataHora || "Sem Data"}\n`;
+      textoResumo += `Tipo de Caixa: ${pedido.caixa || pedido.tipoPedido || "Não informado"}\n`;
+      textoResumo += `Quantidade de Caixas: ${pedido.quantidadeCaixas || 1}\n\n`;
+
+
+      // Agrupar doces por grupo
+      const docesPorGrupo = {
+        tradicional: [],
+        trufado: [],
+        morango: [],
+        'morango pistache': []
+      };
+
+      pedido.doces.forEach(doce => {
+        const nomeMinusculo = doce.nome.toLowerCase();
+        const grupo = docesGrupos[nomeMinusculo] || 'tradicional'; // default para tradicional se não achar
+        docesPorGrupo[grupo].push({ nome: doce.nome, quantidade: doce.quantidade });
+      });
+
+      // Função para montar listagem de doces por grupo
+      const montarListaDoces = (grupo) => {
+        if (docesPorGrupo[grupo].length === 0) return "";
+        let lista = `${grupo.charAt(0).toUpperCase() + grupo.slice(1)}:\n`;
+        docesPorGrupo[grupo].forEach(d => {
+          lista += `${d.quantidade} x ${d.nome}\n`;
+        });
+        return lista + "\n";
+      };
+
+      textoResumo += montarListaDoces('tradicional');
+      textoResumo += montarListaDoces('trufado');
+      textoResumo += montarListaDoces('morango');
+      textoResumo += montarListaDoces('morango pistache');
+
+      
+      pedido.doces.forEach(doce => {
+        const nomeMinusculo = doce.nome.toLowerCase();
+        const grupo = docesGrupos[nomeMinusculo] || 'tradicional';
+        const custoUnitario = valoresCusto[grupo] || 0;
+        valorCustoPedido += custoUnitario * doce.quantidade;
+      });
+      valorCustoPedido *= qtdCaixas;
+
+
+      textoResumo += `Valor Pedido: R$ ${valorCustoPedido.toFixed(2).replace(".", ",")}\n`;
+      textoResumo += "---------------------------------------\n\n";
+
+      valorTotalGeral += valorCustoPedido;
+    });
+    
+    
+    textoResumo += `Valor Total Geral: R$ ${valorTotalGeral.toFixed(2).replace(".", ",")}`;
+
+    const resumoTextArea = document.getElementById("resumoText");
+    resumoTextArea.textContent = textoResumo;
+    document.getElementById("resumoContainer").style.display = "block";
+  }
+
+  document.getElementById("copiarResumoBtn").addEventListener("click", () => {
+    const titulo = "*Pedidos Boniele*\n";
+    const texto = document.getElementById("resumoText").textContent;
+    const textoCompleto = titulo + texto;
+    navigator.clipboard.writeText(textoCompleto).then(() => {
+      alert("Resumo copiado para a área de transferência!");
+    }).catch(() => {
+      alert("Falha ao copiar. Copie manualmente:\n\n" + texto);
+    });
+  });
+
+  function renderPaginacao(total) {
+    const div = document.getElementById("paginacao");
+    div.innerHTML = "";
+
+    const totalPaginas = Math.ceil(total / porPagina);
+    for (let i = 1; i <= totalPaginas; i++) {
+      const btn = document.createElement("button");
+      btn.className = "page-btn";
+      btn.innerText = i;
+      if (i === paginaAtual) btn.disabled = true;
+      btn.onclick = () => {
+        paginaAtual = i;
+        carregarPedidos();
+      };
+      div.appendChild(btn);
+    }
+  }
+
+  document.getElementById("filtroStatus").addEventListener("change", () => {
+    paginaAtual = 1;
+    carregarPedidos();
+  });
+
+  // Função para excluir pedido
+  function excluirPedido(id) {
+    if (!confirm("Tem certeza que deseja excluir este pedido?")) return;
+
+    db.collection("pedidos").doc(id).delete()
+      .then(() => {
+        alert("Pedido excluído com sucesso!");
+        // Remove do array local e recarrega a listagem
+        pedidosTodos = pedidosTodos.filter(p => p.id !== id);
+        carregarPedidos();
+        atualizarResumoSelecionado(); // Atualiza resumo caso tenha selecionado o excluído
+      })
+      .catch(err => {
+        alert("Erro ao excluir pedido: " + err.message);
+      });
+  }
+</script>
+<div id="footer" style="margin-top: 40px; text-align: center; 
+color: #aaa; font-size: 0.9rem; padding: 30px 0;">DoceGestorExpress • 2025<br>AllanTechCode &reg;</div></body> 
+</body>
+</html>

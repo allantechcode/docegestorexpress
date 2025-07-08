@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>Painel Administrativo - DoceGestorExpress</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body { background: #f8f7f4; color: #4a3b28; font-family: 'Segoe UI', Arial, sans-serif; }
+    .painel-card { max-width: 1250px; margin: 32px auto 0 auto; background: #fff; border-radius: 16px; box-shadow: 0 8px 38px 0 rgba(0,0,0,0.10); padding: 32px 16px 24px 16px;}
+    .tab-content { margin-top: 20px; }
+    .nav-tabs .nav-link.active { background: #f5ede2; color: #ba8300; border: none; font-weight: 700; }
+    .nav-tabs .nav-link { border: none; color: #7d5c19; }
+    .user-bar {display:flex;justify-content:flex-end;align-items:center;gap:16px;margin-bottom:15px;}
+    .btn-sair {background:#ffe5a6;color:#bb6d0c;border-radius:7px;border:none;padding:6px 18px;font-weight:600;}
+    .status-tag { font-size: 0.89em; padding: 3px 9px; border-radius: 14px; color: #fff; }
+    .PENDENTE { background: #ffa000; }
+    .APROVADO { background: #42a5f5; }
+    .CONCLUIDO { background: #43be4c; }
+    .user-tag-admin { background: #87d5a6; color:#20503e; font-size: 0.95em; padding: 2px 9px; border-radius: 11px;}
+    .user-tag-comum { background: #dbe9fd; color:#22455c; font-size: 0.95em; padding: 2px 9px; border-radius: 11px;}
+    .visual-toggle {font-weight:600;font-size:1.06em;}
+    .card-pedido { background:#f9f6ed; border-radius: 11px; box-shadow: 0 1px 8px #dec28611; padding:20px;margin-bottom:18px;}
+    .card-pedido.selected {border:2px solid #ffe082;}
+    .resumo-container {background:#fff8e1;border-radius:9px;padding:20px;margin:18px 0;}
+    .modal { display: none; }
+    .modal.show { display: block; background:rgba(0,0,0,0.1);}
+    @media (max-width: 900px){
+      .painel-card { max-width: 99vw; padding: 8px 2px 18px 2px; }
+      .tab-content { margin-top: 5vw; }
+      .user-bar {flex-direction: column;gap:6px;}
+    }
+    @media (max-width: 700px){
+      .card-pedido { padding: 11px 6px; font-size: 0.97em; }
+      .painel-card { padding: 2vw 1vw; }
+      .tab-content { margin-top: 8vw; }
+      #tabelaUsuarios table { font-size: 0.98em; min-width: 480px; }
+      #tabelaUsuarios { overflow-x: auto; }
+    }
+    @media (max-width: 600px){
+      .painel-card { box-shadow: 0 2px 10px 0 rgba(0,0,0,0.11);}
+      .tab-content { margin-top: 13vw; }
+      .card-pedido { margin-bottom: 9px; }
+      .resumo-container { padding: 11px; font-size: 0.98em;}
+    }
+    .tabela-scroll {overflow-x: auto; width: 100%;}
+    #acessoNegado {display:none;align-items:center;justify-content:center;height:80vh;}
+    #acessoNegado .alert {
+      font-size:1.45em;background:#ffe5e5;color:#bb2200;
+      border:2px solid #d43c00;box-shadow:0 4px 24px #faebd7cc;font-weight:700;
+      border-radius:18px;text-align:center;padding:38px 20px;
+      max-width:430px;margin:0 auto;
+    }
+    #acessoNegado .btn {margin-top:24px;font-size:1.1em;}
+  </style>
+</head>
+<body>
+<div id="acessoNegado">
+  <div class="alert">
+    <div>🚫 <br>Opa!! Você <b>não tem permissão</b> para acessar aqui !!</div>
+    <button class="btn btn-warning" onclick="window.location.href='index.html'"><i class="bi bi-house"></i> Voltar para início</button>
+  </div>
+</div>
+<div class="painel-card" id="painelAdmin" style="display:none;">
+  <div class="user-bar">
+    <span id="userLogado" style="font-weight:600;font-size:1.08em"></span>
+    <button class="btn-sair" onclick="sair()">Sair</button>
+  </div>
+  <ul class="nav nav-tabs" id="adminTabs" role="tablist">
+    <li class="nav-item"><a class="nav-link active" id="tab-pedidos" data-bs-toggle="tab" href="#pedidosTab" role="tab">Pedidos</a></li>
+    <li class="nav-item"><a class="nav-link" id="tab-users" data-bs-toggle="tab" href="#usersTab" role="tab">Usuários</a></li>
+    <li class="nav-item"><a class="nav-link" id="tab-doces" data-bs-toggle="tab" href="#docesTab" role="tab">Doces</a></li>
+    <li class="nav-item"><a class="nav-link" id="tab-relatorios" data-bs-toggle="tab" href="#relatoriosTab" role="tab">Relatórios</a></li>
+    <li class="nav-item"><a class="nav-link" id="tab-producao" data-bs-toggle="tab" href="#producaoTab" role="tab">Modo Produção</a></li>
+  </ul>
+  <div class="tab-content">
+    <!-- PEDIDOS -->
+    <div class="tab-pane fade show active" id="pedidosTab" role="tabpanel">
+      <div class="d-flex flex-wrap justify-content-between align-items-center mt-3 mb-2 gap-2">
+        <div>
+          <label>Status: <select id="filtroStatusPedidos" class="form-select form-select-sm d-inline" style="max-width:120px;">
+            <option value="TODOS">Todos</option>
+            <option value="PENDENTE" selected>Pendente</option>
+            <option value="APROVADO">Aprovado</option>
+            <option value="CONCLUIDO">Concluído</option>
+          </select></label>
+          <input id="filtroNomePedido" class="form-control form-control-sm d-inline" style="width:180px;max-width:98vw;" placeholder="Buscar nome ou e-mail">
+        </div>
+        <span class="visual-toggle" style="user-select:none;">
+          <i class="bi bi-table"></i> <input type="radio" name="visualPedidos" value="tabela"> 
+          <i class="bi bi-view-list"></i> <input type="radio" name="visualPedidos" value="cards"> 
+        </span>
+      </div>
+      
+<div id="carregamentoPedidosBox" class="my-4 text-center">
+  <button id="btnAbrirFiltroPedidos" class="btn btn-warning btn-lg" style="font-size:1.2em;">
+    <i class="bi bi-cloud-arrow-down"></i> Carregar Pedidos
+  </button>
+  <div id="filtrosPedidosBox" class="mt-4" style="display:none;max-width:400px;margin:0 auto;">
+    <div class="d-flex flex-column gap-2 align-items-center">
+      <div>
+        <button class="btn btn-outline-primary btn-sm me-1" onclick="carregarPedidosRapido(2)">
+          <i class="bi bi-clock-history"></i> Últimos 2 dias
+        </button>
+        <button class="btn btn-outline-primary btn-sm me-1" onclick="carregarPedidosRapido(3)">
+          <i class="bi bi-clock-history"></i> Últimos 3 dias
+        </button>
+        <button class="btn btn-outline-primary btn-sm" onclick="carregarPedidosRapido(4)">
+          <i class="bi bi-clock-history"></i> Últimos 4 dias
+        </button>
+      </div>
+      <div class="d-flex gap-2 align-items-center">
+        <span>ou</span>
+        <input type="date" id="filtroInicio" class="form-control form-control-sm" style="max-width:120px;">
+        <span>até</span>
+        <input type="date" id="filtroFim" class="form-control form-control-sm" style="max-width:120px;">
+        <button class="btn btn-primary btn-sm" onclick="carregarPedidosPeriodo()">
+          <i class="bi bi-search"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+  <div id="carregandoPedidosAnim" class="mt-4" style="display:none;">
+    <div class="d-flex flex-column align-items-center justify-content-center" style="min-height:120px;">
+      <i class="bi bi-arrow-repeat" style="font-size:2.6em;animation:spin 1s linear infinite;"></i>
+      <span class="mt-2" style="font-size:1.2em;">Carregando pedidos...</span>
+    </div>
+  </div>
+</div>
+
+<style>
+@keyframes spin {
+  0% {transform:rotate(0deg);}
+  100% {transform:rotate(360deg);}
+}
+</style>
+
+<script>
+document.getElementById("btnAbrirFiltroPedidos").onclick = function() {
+  document.getElementById("filtrosPedidosBox").style.display = "";
+};
+
+function carregarPedidosRapido(dias) {
+  let agora = new Date();
+  let inicio = new Date();
+  inicio.setDate(agora.getDate() - dias);
+  carregarPedidosComFiltro(inicio, agora);
+}
+
+function carregarPedidosPeriodo() {
+  let inicioStr = document.getElementById("filtroInicio").value;
+  let fimStr = document.getElementById("filtroFim").value;
+  if(!inicioStr || !fimStr) { alert('Selecione o período!'); return; }
+  let inicio = new Date(inicioStr + "T00:00:00");
+  let fim = new Date(fimStr + "T23:59:59");
+  carregarPedidosComFiltro(inicio, fim);
+}
+
+function carregarPedidosComFiltro(dtInicio, dtFim) {
+  document.getElementById("carregandoPedidosAnim").style.display = "";
+  document.getElementById("filtrosPedidosBox").style.display = "none";
+  pedidos = [];
+  db.collection("pedidos").get().then(snapshot=>{
+    let allPedidos = snapshot.docs.map(doc=>({id:doc.id, ...doc.data()}));
+    let filtrados = allPedidos.filter(p => {
+      if(!p.dataHora) return false;
+      let partes = p.dataHora.split(",")[0].split("/");
+      if(partes.length !== 3) return false;
+      let dataPedido = new Date(`${partes[2]}-${partes[1]}-${partes[0]}T00:00:00`);
+      return dataPedido >= dtInicio && dataPedido <= dtFim;
+    });
+    pedidos = filtrados;
+    document.getElementById("carregandoPedidosAnim").style.display = "none";
+    renderPedidos();
+    exibirBoxCarregamentoPedidos(false);
+  });
+}
+
+function exibirBoxCarregamentoPedidos(exibir){
+  document.getElementById("carregamentoPedidosBox").style.display = exibir ? "" : "none";
+  document.getElementById("tabelaPedidos").style.display = exibir ? "none" : "";
+  document.getElementById("cardsPedidos").style.display = exibir ? "none" : "";
+}
+
+document.addEventListener("DOMContentLoaded", () => exibirBoxCarregamentoPedidos(true));
+</script>
+
+
+<div id="acoesExtrasPedidos" class="mt-3 text-center" style="display:none;">
+  <button class="btn btn-secondary btn-sm" onclick="resetarBuscaPedidos()">
+    <i class="bi bi-arrow-counterclockwise"></i> Refazer Busca
+  </button>
+</div>
+
+<div id="semPedidosMensagem" class="alert alert-warning text-center mt-4" style="display:none; font-size:1.2em;">
+  <i class="bi bi-exclamation-triangle-fill"></i> Nenhum pedido encontrado para o período selecionado.
+</div>
+
+<script>
+function resetarBuscaPedidos() {
+  pedidos = [];
+  document.getElementById("tabelaPedidos").innerHTML = "";
+  document.getElementById("cardsPedidos").innerHTML = "";
+  document.getElementById("acoesExtrasPedidos").style.display = "none";
+  document.getElementById("semPedidosMensagem").style.display = "none";
+  exibirBoxCarregamentoPedidos(true);
+}
+
+function exibirMensagemSemPedidos(exibir){
+  document.getElementById("semPedidosMensagem").style.display = exibir ? "" : "none";
+  document.getElementById("acoesExtrasPedidos").style.display = exibir ? "" : "none";
+}
+
+function carregarPedidosComFiltro(dtInicio, dtFim) {
+  document.getElementById("carregandoPedidosAnim").style.display = "";
+  document.getElementById("filtrosPedidosBox").style.display = "none";
+  pedidos = [];
+  db.collection("pedidos").get().then(snapshot=>{
+    let allPedidos = snapshot.docs.map(doc=>({id:doc.id, ...doc.data()}));
+    let filtrados = allPedidos.filter(p => {
+      if(!p.dataHora) return false;
+      let partes = p.dataHora.split(",")[0].split("/");
+      if(partes.length !== 3) return false;
+      let dataPedido = new Date(`${partes[2]}-${partes[1]}-${partes[0]}T00:00:00`);
+      return dataPedido >= dtInicio && dataPedido <= dtFim;
+    });
+    pedidos = filtrados;
+    document.getElementById("carregandoPedidosAnim").style.display = "none";
+    if(pedidos.length === 0){
+      exibirMensagemSemPedidos(true);
+    } else {
+      renderPedidos();
+      exibirMensagemSemPedidos(false);
+      exibirBoxCarregamentoPedidos(false);
+      document.getElementById("acoesExtrasPedidos").style.display = "";
+    }
+  });
+}
+</script>
+
+<div class="tabela-scroll"><div id="tabelaPedidos" style="display:none;"></div></div>
+      <div id="cardsPedidos" style="display:none;"></div>
+      <div id="resumoSelecionados" class="resumo-container" style="display:none;">
+        <h5>Pedidos Boniele</h5>
+        <pre id="resumoText" style="white-space:pre-line"></pre>
+        <button class="btn btn-warning btn-sm" onclick="copiarResumo()">Copiar Resumo</button>
+        <button class="btn btn-outline-danger btn-sm" onclick="exportarResumoSelecionadosPDF()"><i class="bi bi-file-earmark-pdf"></i> Exportar PDF</button>
+      </div>
+    </div>
+    <!-- USUÁRIOS -->
+    <div class="tab-pane fade" id="usersTab" role="tabpanel">
+      <h4 class="mt-3">Gerenciar Usuários</h4>
+      <button class="btn btn-success mb-2" onclick="abrirModalUsuario()">Novo Usuário</button>
+      <input id="filtroUsuario" class="form-control form-control-sm mb-2" placeholder="Buscar por nome ou e-mail">
+      <div id="tabelaUsuarios"></div>
+    </div>
+    <!-- DOCES -->
+    <div class="tab-pane fade" id="docesTab" role="tabpanel">
+      <h4 class="mt-3">Produtos (Doces)</h4>
+      <button class="btn btn-success mb-2" onclick="abrirModalDoce()">Novo Produto</button>
+      <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+        <input id="filtroDoce" class="form-control form-control-sm" style="width:160px;max-width:99vw;" placeholder="Buscar nome...">
+        <select id="filtroGrupoDoce" class="form-select form-select-sm" style="width:140px;">
+          <option value="">Todos os grupos</option>
+          <option value="TRADICIONAL">TRADICIONAL</option>
+          <option value="TRUFADO">TRUFADO</option>
+          <option value="MORANGO">MORANGO</option>
+          <option value="MORANGO COM PISTACHE">MORANGO COM PISTACHE</option>
+        </select>
+        <button class="btn btn-warning btn-sm ms-auto" onclick="abrirAlteracaoMassa()">Alterar Grupo em Massa</button>
+      </div>
+      <div id="tabelaDoces"></div>
+    </div>
+    <!-- RELATÓRIOS -->
+    <div class="tab-pane fade" id="relatoriosTab" role="tabpanel">
+      <h4 class="mt-3"><i class="bi bi-clipboard-data"></i> Relatórios</h4>
+      <form class="row g-2 mb-3 align-items-end" onsubmit="gerarRelatorio(event)">
+        <div class="col-auto">
+          <label class="form-label">Período:</label>
+          <input type="date" id="relInicio" class="form-control form-control-sm">
+        </div>
+        <div class="col-auto">
+          <label class="form-label">Até:</label>
+          <input type="date" id="relFim" class="form-control form-control-sm">
+        </div>
+        <div class="col-auto">
+          <label class="form-label">Vendedor:</label>
+          <input type="text" id="relVendedor" class="form-control form-control-sm" placeholder="Nome ou e-mail">
+        </div>
+        <div class="col-auto">
+          <label class="form-label">Status:</label>
+          <select id="relStatus" class="form-select form-select-sm">
+            <option value="">Todos</option>
+            <option value="PENDENTE">Pendente</option>
+            <option value="APROVADO">Aprovado</option>
+            <option value="CONCLUIDO">Concluído</option>
+          </select>
+        </div>
+        <div class="col-auto">
+          <button class="btn btn-primary btn-sm" type="submit"><i class="bi bi-search"></i> Gerar Relatório</button>
+        </div>
+      </form>
+      <div id="botoesRelatorio" style="display:none;margin-bottom:16px;">
+        <button class="btn btn-outline-secondary btn-sm" onclick="copiarRelatorio()"><i class="bi bi-clipboard"></i> Copiar Texto</button>
+        <button class="btn btn-outline-danger btn-sm" onclick="exportarRelatorioPDF()"><i class="bi bi-file-earmark-pdf"></i> Exportar PDF</button>
+      </div>
+      <div id="resultadoRelatorio"></div>
+    </div>
+    <!-- PRODUÇÃO -->
+    <div class="tab-pane fade" id="producaoTab" role="tabpanel">
+      <h4 class="mt-3">Modo Produção</h4>
+      <a class="btn btn-warning" href="producao.html" target="_blank"><i class="bi bi-gear"></i> Abrir Modo Produção</a>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Usuário -->
+<div class="modal fade" id="usuarioModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="formUsuario">
+        <div class="modal-header"><h5 class="modal-title">Usuário</h5></div>
+        <div class="modal-body">
+          <input type="hidden" id="usuarioId">
+          <div class="mb-2"><label class="form-label">Nome:</label><input id="usuarioNome" class="form-control" required></div>
+          <div class="mb-2"><label class="form-label">E-mail:</label><input id="usuarioEmail" type="email" class="form-control" required></div>
+          <div class="mb-2"><label class="form-label">Senha:</label><input id="usuarioSenha" type="password" class="form-control"></div>
+          <div class="mb-2"><label class="form-label">Tipo:</label>
+            <select id="usuarioTipo" class="form-select">
+              <option value="admin">Administrador</option>
+              <option value="comum">Comum</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">Cancelar</button>
+          <button class="btn btn-primary" type="submit">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Doce -->
+<div class="modal fade" id="doceModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="formDoce">
+        <div class="modal-header"><h5 class="modal-title">Produto (Doce)</h5></div>
+        <div class="modal-body">
+          <input type="hidden" id="doceId">
+          <div class="mb-2"><label class="form-label">Nome:</label><input id="doceNome" class="form-control" required></div>
+          <div class="mb-2"><label class="form-label">Grupo:</label>
+            <select id="doceGrupo" class="form-select" required>
+              <option value="TRADICIONAL">TRADICIONAL</option>
+              <option value="TRUFADO">TRUFADO</option>
+              <option value="MORANGO">MORANGO</option>
+              <option value="MORANGO COM PISTACHE">MORANGO COM PISTACHE</option>
+            </select>
+          </div>
+          <div class="mb-2"><label class="form-label">Preço Venda (R$):</label><input id="docePreco" class="form-control" type="number" step="0.01" required></div>
+          <div class="mb-2"><label class="form-label">Valor de Custo (R$):</label><input id="doceCusto" class="form-control" type="number" step="0.01" required></div>
+          <div class="mb-2"><label class="form-label">Ativo:</label> <input id="doceAtivo" type="checkbox" checked></div>
+          <div class="mb-2"><label class="form-label">Ordem:</label><input id="doceOrdem" class="form-control" type="number" value="1"></div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">Cancelar</button>
+          <button class="btn btn-primary" type="submit">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Alteração em Massa -->
+<div class="modal fade" id="modalMassa" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="formMassa">
+        <div class="modal-header"><h5 class="modal-title">Alterar valores em Massa</h5></div>
+        <div class="modal-body">
+          <div class="mb-2"><label>Grupo:</label>
+            <select id="massaGrupo" class="form-select" required>
+              <option value="">Selecione o grupo</option>
+              <option value="TRADICIONAL">TRADICIONAL</option>
+              <option value="TRUFADO">TRUFADO</option>
+              <option value="MORANGO">MORANGO</option>
+              <option value="MORANGO COM PISTACHE">MORANGO COM PISTACHE</option>
+            </select>
+          </div>
+          <div class="mb-2"><label>Preço Venda (R$):</label><input id="massaPreco" class="form-control" type="number" step="0.01"></div>
+          <div class="mb-2"><label>Custo (R$):</label><input id="massaCusto" class="form-control" type="number" step="0.01"></div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">Cancelar</button>
+          <button class="btn btn-primary" type="submit">Alterar Todos</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Detalhes Pedido (Visualização Rápida no CARD) -->
+<div class="modal fade" id="modalDetalhesPedido" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-info-circle"></i> Detalhes do Pedido</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="detalhesPedidoBody"></div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+// --- FIREBASE INIT ---
+const firebaseConfig = {
+  apiKey: "AIzaSyBaeSVaAa8RoX_dYW8_YKxY7naw9vq8OX8",
+  authDomain: "docepedidoexpress.firebaseapp.com",
+  projectId: "docepedidoexpress",
+  storageBucket: "docepedidoexpress.firebasestorage.app",
+  messagingSenderId: "599415242749",
+  appId: "1:599415242749:web:e2b4ad85d82aef617ba394"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+let usuarioAtual = null;
+let usuarios = [], pedidos = [], doces = [];
+let pedidosSelecionados = [];
+let visualPedidos = "tabela";
+let deviceIsMobile = false;
+
+// Detecta mobile/tablet
+function detectMobile() {
+  return (window.innerWidth < 650 || /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
+}
+function setVisualDefaultPedidos() {
+  deviceIsMobile = detectMobile();
+  const cardRadio = document.querySelector('input[name="visualPedidos"][value="cards"]');
+  const tabRadio  = document.querySelector('input[name="visualPedidos"][value="tabela"]');
+  if(deviceIsMobile){
+    if(cardRadio) { cardRadio.checked = true; visualPedidos="cards"; }
+  } else {
+    if(tabRadio) { tabRadio.checked = true; visualPedidos="tabela"; }
+  }
+}
+document.addEventListener("DOMContentLoaded", setVisualDefaultPedidos);
+document.getElementById('tab-pedidos').addEventListener('click', function(){ setTimeout(setVisualDefaultPedidos,50); });
+
+// Filtros doces
+document.addEventListener("DOMContentLoaded", function() {
+  document.getElementById("filtroDoce").oninput = renderDoces;
+  document.getElementById("filtroGrupoDoce").onchange = renderDoces;
+  document.getElementById("filtroUsuario").oninput = renderUsuarios;
+});
+
+auth.onAuthStateChanged(user => {
+  if (!user) { window.location.href = "index.html"; return; }
+  usuarioAtual = user;
+  if (user.email !== "boni.palhano@gmail.com") {
+    document.getElementById('painelAdmin').style.display = "none";
+    document.getElementById('acessoNegado').style.display = "flex";
+  } else {
+    document.getElementById('painelAdmin').style.display = "";
+    document.getElementById('acessoNegado').style.display = "none";
+    document.getElementById('userLogado').innerHTML = `<i class="bi bi-person"></i> ${user.displayName || user.email}`;
+    carregarUsuarios();
+    carregarDoces();
+    // carregarPedidos(); (removido por solicitação do usuário)
+  }
+});
+function sair() { auth.signOut().then(()=>window.location.href="index.html"); }
+
+document.querySelectorAll('input[name="visualPedidos"]').forEach(rb=>{
+  rb.addEventListener("change", e=>{
+    visualPedidos = e.target.value;
+    renderPedidos();
+  });
+});
+
+function carregarPedidos() {
+  db.collection("pedidos").get().then(snapshot=>{
+    pedidos = snapshot.docs.map(doc=>({id:doc.id, ...doc.data()}));
+    renderPedidos();
+  });
+}
+function renderPedidos() {
+  const status = document.getElementById("filtroStatusPedidos").value;
+  const nome = document.getElementById("filtroNomePedido").value.trim().toLowerCase();
+  let lista = pedidos;
+  if (status !== "TODOS") lista = lista.filter(p=>p.status===status);
+  if (nome.length>0) lista = lista.filter(p=>(p.DisplayName||"").toLowerCase().includes(nome) || (p.usuarioEmail||"").toLowerCase().includes(nome));
+  lista.sort((a,b)=>(b.numeroPedido||0)-(a.numeroPedido||0));
+  let idsSelecionados = pedidosSelecionados.slice();
+
+  if (visualPedidos==="tabela") {
+    document.getElementById("tabelaPedidos").style.display = "";
+    document.getElementById("cardsPedidos").style.display = "none";
+    let html = `<table class="table table-bordered"><thead>
+      <tr><th><input type="checkbox" id="chkTodos"></th><th>Status</th><th>#</th><th>Usuário</th><th>Data</th><th>Tipo</th><th>Caixas</th><th>Valor Cliente</th><th>Valor Custo</th><th>Ações</th></tr></thead><tbody>`;
+    lista.forEach(p=>{
+      html += `<tr>
+        <td><input type="checkbox" class="chkPedido" value="${p.id}" ${idsSelecionados.includes(p.id)?"checked":""}></td>
+        <td>
+          <select class="form-select form-select-sm" onchange="alterarStatusPedido('${p.id}',this.value)">
+            <option value="PENDENTE" ${p.status==="PENDENTE"?"selected":""}>PENDENTE</option>
+            <option value="APROVADO" ${p.status==="APROVADO"?"selected":""}>APROVADO</option>
+            <option value="CONCLUIDO" ${p.status==="CONCLUIDO"?"selected":""}>CONCLUÍDO</option>
+          </select>
+        </td>
+        <td>${p.numeroPedido||''}</td>
+        <td>${p.DisplayName||p.usuarioEmail||'Sem nome'}</td>
+        <td>${p.dataHora||''}</td>
+        <td>${p.caixa||''}</td>
+        <td>${p.quantidadeCaixas||1}</td>
+        <td>R$${(typeof p.valorTotal==="string"?p.valorTotal:p.valorTotal?.toFixed(2)).replace('.',',')}</td>
+        <td>R$${calcularValorCusto(p).toFixed(2).replace('.',',')}</td>
+        <td>
+          <button class="btn btn-outline-info btn-sm" onclick="toggleDetalhesPedido('${p.id}')"><i class="bi bi-list-ul"></i></button>
+          <button class="btn btn-outline-danger btn-sm" onclick="excluirPedido('${p.id}')"><i class="bi bi-trash"></i></button>
+        </td>
+      </tr>
+      <tr class="detalhes-pedido-row" id="detalhes-row-${p.id}" style="display:none;">
+        <td colspan="10">
+          <div><b>Doces:</b><br>${p.doces.map(d=>`${d.quantidade} x ${d.nome}`).join('<br>')}</div>
+        </td>
+      </tr>`;
+    });
+    html += "</tbody></table>";
+    document.getElementById("tabelaPedidos").innerHTML = html;
+    document.querySelectorAll(".chkPedido").forEach(cb=>cb.addEventListener("change", function(){
+      if(this.checked) {
+        if(!pedidosSelecionados.includes(this.value)) pedidosSelecionados.push(this.value);
+      } else {
+        pedidosSelecionados = pedidosSelecionados.filter(x=>x!==this.value);
+      }
+      gerarResumoSelecionados();
+    }));
+    let chkTodos = document.getElementById("chkTodos");
+    if(chkTodos) chkTodos.onclick = function() {
+      const val = this.checked;
+      document.querySelectorAll(".chkPedido").forEach(cb=>{
+        cb.checked=val;
+        if(val) {
+          if(!pedidosSelecionados.includes(cb.value)) pedidosSelecionados.push(cb.value);
+        } else {
+          pedidosSelecionados = [];
+        }
+      });
+      gerarResumoSelecionados();
+    }
+  } else {
+    document.getElementById("tabelaPedidos").style.display = "none";
+    document.getElementById("cardsPedidos").style.display = "";
+    let html = "";
+    lista.forEach(p=>{
+      html += `<div class="card-pedido" id="card-pedido-${p.id}">
+        <div class="d-flex align-items-center gap-2 mb-1">
+          <input type="checkbox" class="chkPedido" value="${p.id}" ${idsSelecionados.includes(p.id)?"checked":""}>
+          <span class="status-tag ${p.status}">${p.status||''}</span>
+          <span style="font-weight:600">#${p.numeroPedido||''}</span>
+          <span style="margin-left:auto;font-size:.97em;color:#c49d65">${p.DisplayName||p.usuarioEmail||'Sem nome'}</span>
+        </div>
+        <div class="mb-1" style="font-size:.97em;">
+          <b>Data:</b> ${p.dataHora||''} <b>Tipo:</b> ${p.caixa||''} <b>Caixas:</b> ${p.quantidadeCaixas||1}<br>
+          <b>Valor Cliente:</b> R$${(typeof p.valorTotal==="string"?p.valorTotal:p.valorTotal?.toFixed(2)).replace('.',',')} 
+          <b>Valor Custo:</b> R$${calcularValorCusto(p).toFixed(2).replace('.',',')}
+        </div>
+        <button class="btn btn-outline-info btn-sm" onclick="toggleDetalhesPedido('${p.id}')"><i class="bi bi-list-ul"></i> Detalhes</button>
+        <button class="btn btn-outline-danger btn-sm" onclick="excluirPedido('${p.id}')"><i class="bi bi-trash"></i></button>
+      </div>`;
+    });
+    document.getElementById("cardsPedidos").innerHTML = html;
+    document.querySelectorAll(".chkPedido").forEach(cb=>cb.addEventListener("change", function(){
+      if(this.checked) {
+        if(!pedidosSelecionados.includes(this.value)) pedidosSelecionados.push(this.value);
+      } else {
+        pedidosSelecionados = pedidosSelecionados.filter(x=>x!==this.value);
+      }
+      gerarResumoSelecionados();
+    }));
+  }
+}
+
+window.alterarStatusPedido = function(id, status) {
+  db.collection("pedidos").doc(id).update({status}).then(()=>carregarPedidos());
+}
+window.excluirPedido = function(id){
+  if(confirm("Confirma remover este pedido?")){
+    db.collection("pedidos").doc(id).delete().then(()=>carregarPedidos());
+  }
+}
+window.toggleDetalhesPedido = function(id){
+  if (visualPedidos==="cards" || deviceIsMobile) {
+    const p = pedidos.find(p=>p.id===id);
+    if(!p) return;
+    let html = `<div style="font-weight:600"><i class="bi bi-hash"></i> Pedido #${p.numeroPedido}</div>
+      <div><b>Cliente:</b> ${p.DisplayName||p.usuarioEmail||'Sem nome'}</div>
+      <div><b>Status:</b> <span class="status-tag ${p.status}">${p.status}</span></div>
+      <div><b>Data/Hora:</b> ${p.dataHora||'-'}</div>
+      <div><b>Tipo:</b> ${p.caixa||'-'} <b>Caixas:</b> ${p.quantidadeCaixas||1}</div>
+      <div><b>Valor Cliente:</b> R$${(typeof p.valorTotal==="string"?p.valorTotal:p.valorTotal?.toFixed(2)).replace('.',',')}</div>
+      <div><b>Valor Custo:</b> R$${calcularValorCusto(p).toFixed(2).replace('.',',')}</div>
+      <div class="mt-2"><b>Doces:</b><br>${p.doces.map(d=>`${d.quantidade} x ${d.nome}`).join('<br>')}</div>
+    `;
+    document.getElementById("detalhesPedidoBody").innerHTML = html;
+    let modal = new bootstrap.Modal(document.getElementById('modalDetalhesPedido'));
+    modal.show();
+  } else {
+    const el = document.getElementById("detalhes-row-"+id);
+    if (!el) return;
+    if (el.tagName==="TR") {
+      el.style.display = (el.style.display === "none" || el.style.display === "") ? "table-row" : "none";
+    }
+  }
+};
+function gerarResumoSelecionados() {
+  if (!pedidosSelecionados.length) {
+    document.getElementById("resumoSelecionados").style.display = "none";
+    return;
+  }
+  let selecionados = pedidosSelecionados.map(id=>pedidos.find(p=>p.id===id)).filter(Boolean);
+
+  let qtdCaixa30 = 0, qtdCaixa49 = 0, valorCustoGeral = 0, qtdUnidades = 0;
+  selecionados.forEach(p => {
+    if (p.caixa && p.caixa.toString().includes("30")) qtdCaixa30 += Number(p.quantidadeCaixas || 1);
+    if (p.caixa && p.caixa.toString().includes("49")) qtdCaixa49 += Number(p.quantidadeCaixas || 1);
+    if ((p.caixa && (p.caixa.toString().toLowerCase().includes("unit") ||
+      p.caixa.toString().toLowerCase().includes("unid")
+    )) || (!p.caixa && p.tipo === "unitario")
+  ) {
+    // Se veio a lista de doces, some as quantidades
+    if (Array.isArray(p.doces)) {
+      p.doces.forEach(d => {
+        qtdUnidades += Number(d.quantidade || 0);
+      });
+    }
+  }
+    // Calcular custo do pedido selecionado usando doces da base atual
+    let valorCustoPedido = 0;
+    if (Array.isArray(p.doces)) {
+      p.doces.forEach(d => {
+        let doceDb = doces.find(dd=>dd.nome === d.nome);
+        let custo = doceDb ? Number(doceDb.custo||0) : 0;
+        valorCustoPedido += custo * Number(d.quantidade || 0);
+      });
+    }
+    valorCustoPedido *= Number(p.quantidadeCaixas || 1);
+    valorCustoGeral += valorCustoPedido;
+    p._valorCustoResumo = valorCustoPedido; // anexa para usar na listagem individual
+  });
+
+  let texto = `Resumo dos pedidos selecionados\n`;
+  if(qtdCaixa30 > 0) texto += `Caixas de 30 = ${qtdCaixa30}\n`;
+  if(qtdCaixa49 > 0) texto += `Caixas de 49 = ${qtdCaixa49}\n`;
+  if(qtdUnidades > 0) texto += `Unidades = ${qtdUnidades}\n`;
+  texto += `Custo total = R$ ${valorCustoGeral.toFixed(2).replace(".", ",")}\n`;
+  texto += `-------------------------------\n`;
+
+  selecionados.forEach(p => {
+    texto += `Pedido #${p.numeroPedido}\n`;
+    texto += `${p.DisplayName||p.usuarioEmail||""}\n`;
+    texto += `${p.dataHora||''}\n`;
+    texto += p.doces.map(d=>`${d.quantidade} x ${d.nome}`).join('\n');
+    texto += `\nCusto unitário: R$${Number(p._valorCustoResumo||0).toFixed(2).replace('.',',')}\n`;
+    texto += `___________________________\n`;
+  });
+
+  document.getElementById("resumoText").textContent = texto;
+  document.getElementById("resumoSelecionados").style.display = "";
+}
+
+
+function copiarResumo() {
+  const texto = document.getElementById("resumoText").textContent;
+  navigator.clipboard.writeText(texto).then(()=>alert("Resumo copiado!"));
+}
+function calcularValorCusto(pedido){
+  let total = 0;
+  if(!pedido.doces) return 0;
+  pedido.doces.forEach(d=>{
+    let doce = doces.find(dd=>dd.nome===d.nome);
+    let custo = doce?.custo || 0;
+    total += custo * d.quantidade;
+  });
+  return total * (pedido.quantidadeCaixas||1);
+}
+document.getElementById("filtroStatusPedidos").onchange = renderPedidos;
+document.getElementById("filtroNomePedido").oninput = renderPedidos;
+
+// --- USUÁRIOS (CRUD) ---
+function carregarUsuarios() {
+  db.collection("usuarios").get().then(snapshot => {
+    usuarios = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    renderUsuarios();
+  });
+}
+function renderUsuarios() {
+  const filtro = (document.getElementById("filtroUsuario")?.value || "").toLowerCase();
+  const lista = usuarios.filter(u =>
+    !filtro ||
+    (u.nome||'').toLowerCase().includes(filtro) ||
+    (u.email||'').toLowerCase().includes(filtro)
+  );
+
+  // Detecta se está em modo mobile
+  const mobile = window.innerWidth < 700;
+  let html = "";
+
+  if (!mobile) {
+    // Modo tabela tradicional
+    html += `<table class="table table-bordered"><thead>
+      <tr><th>Nome</th><th>Email</th><th>Tipo</th><th>Ações</th></tr></thead><tbody>`;
+    lista.forEach(u => {
+      html += `<tr>
+        <td>${u.nome || ''}</td>
+        <td>${u.email || ''}</td>
+        <td><span class="${u.tipo === 'admin' ? 'user-tag-admin' : 'user-tag-comum'}">${u.tipo === 'admin' ? 'Administrador' : 'Comum'}</span></td>
+        <td>
+          <button class="btn btn-outline-primary btn-sm" onclick="editarUsuario('${u.id}')"><i class="bi bi-pencil"></i></button>
+          <button class="btn btn-outline-danger btn-sm" onclick="removerUsuario('${u.id}')"><i class="bi bi-trash"></i></button>
+          <button class="btn btn-outline-warning btn-sm" title="Reenviar recuperação de senha" onclick="reenviarRecuperacao('${u.email}')"><i class="bi bi-envelope-arrow-up"></i></button>
+        </td>
+      </tr>`;
+    });
+    html += `</tbody></table>`;
+  } else {
+    // Modo card stack para mobile
+    lista.forEach(u => {
+      html += `
+      <div class="card mb-2 shadow-sm" style="border-radius:12px;">
+        <div class="card-body p-2">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <strong>${u.nome || ''}</strong>
+            <span class="${u.tipo === 'admin' ? 'user-tag-admin' : 'user-tag-comum'}">${u.tipo === 'admin' ? 'Administrador' : 'Comum'}</span>
+          </div>
+          <div class="mb-2" style="font-size:.98em;"><i class="bi bi-envelope"></i> ${u.email || ''}</div>
+          <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary btn-sm" onclick="editarUsuario('${u.id}')"><i class="bi bi-pencil"></i></button>
+            <button class="btn btn-outline-danger btn-sm" onclick="removerUsuario('${u.id}')"><i class="bi bi-trash"></i></button>
+            <button class="btn btn-outline-warning btn-sm" title="Reenviar recuperação de senha" onclick="reenviarRecuperacao('${u.email}')"><i class="bi bi-envelope-arrow-up"></i></button>
+          </div>
+        </div>
+      </div>`;
+    });
+  }
+
+  document.getElementById("tabelaUsuarios").innerHTML = html;
+}
+window.addEventListener("resize", renderUsuarios);
+
+function abrirModalUsuario(id=null) {
+  document.getElementById("usuarioId").value = "";
+  document.getElementById("usuarioNome").value = "";
+  document.getElementById("usuarioEmail").value = "";
+  document.getElementById("usuarioSenha").value = "";
+  document.getElementById("usuarioTipo").value = "comum";
+  if(id){
+    const u = usuarios.find(x=>x.id===id);
+    if(!u) return;
+    document.getElementById("usuarioId").value = u.id;
+    document.getElementById("usuarioNome").value = u.nome;
+    document.getElementById("usuarioEmail").value = u.email;
+    document.getElementById("usuarioTipo").value = u.tipo;
+  }
+  new bootstrap.Modal(document.getElementById("usuarioModal")).show();
+}
+document.getElementById("formUsuario").onsubmit = function(e){
+  e.preventDefault();
+  const id = document.getElementById("usuarioId").value;
+  const nome = document.getElementById("usuarioNome").value;
+  const email = document.getElementById("usuarioEmail").value;
+  const senha = document.getElementById("usuarioSenha").value;
+  const tipo = document.getElementById("usuarioTipo").value;
+  if(id){
+    db.collection("usuarios").doc(id).update({ nome, email, tipo }).then(()=>carregarUsuarios());
+  }else{
+    db.collection("usuarios").add({ nome, email, tipo }).then(()=>carregarUsuarios());
+    if(senha.length>=6){
+      auth.createUserWithEmailAndPassword(email, senha)
+        .then(userCred=>{
+          userCred.user.updateProfile({displayName: nome});
+        });
+    }
+  }
+  bootstrap.Modal.getInstance(document.getElementById("usuarioModal")).hide();
+};
+function editarUsuario(id){ abrirModalUsuario(id); }
+function removerUsuario(id){
+  if(confirm("Deseja remover este usuário?")) {
+    db.collection("usuarios").doc(id).delete().then(()=>carregarUsuarios());
+  }
+}
+
+// --- DOCES (CRUD) ---
+function carregarDoces() {
+  db.collection("doces").get().then(snapshot => {
+    doces = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    renderDoces();
+    renderPedidos();
+  });
+}
+function renderDoces(){
+  const filtro = (document.getElementById("filtroDoce")?.value || "").toLowerCase();
+  const grupoFiltro = document.getElementById("filtroGrupoDoce")?.value || "";
+  const lista = doces.filter(d =>
+    (!filtro || (d.nome||'').toLowerCase().includes(filtro)) &&
+    (!grupoFiltro || d.grupo === grupoFiltro)
+  );
+  const mobile = window.innerWidth < 700;
+  let html = "";
+
+  if (!mobile) {
+    html += `<table class="table table-bordered"><thead>
+      <tr><th>Nome</th><th>Grupo</th><th>Venda (R$)</th><th>Custo (R$)</th><th>Ativo</th><th>Ordem</th><th>Ações</th></tr></thead><tbody>`;
+    lista.forEach(d=>{
+      html += `<tr>
+        <td>${d.nome}</td>
+        <td>${d.grupo}</td>
+        <td>R$${parseFloat(d.preco).toFixed(2).replace('.',',')}</td>
+        <td>R$${parseFloat(d.custo||0).toFixed(2).replace('.',',')}</td>
+        <td>${d.ativo?'Sim':'Não'}</td>
+        <td>${d.ordem||''}</td>
+        <td>
+          <button class="btn btn-outline-primary btn-sm" onclick="editarDoce('${d.id}')"><i class="bi bi-pencil"></i></button>
+          <button class="btn btn-outline-danger btn-sm" onclick="removerDoce('${d.id}')"><i class="bi bi-trash"></i></button>
+        </td>
+      </tr>`;
+    });
+    html += `</tbody></table>`;
+  } else {
+    lista.forEach(d=>{
+      html += `
+      <div class="card mb-2 shadow-sm" style="border-radius:12px;">
+        <div class="card-body p-2">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <strong>${d.nome}</strong>
+            <span class="badge bg-secondary">${d.grupo}</span>
+          </div>
+          <div class="mb-2" style="font-size:.97em;">
+            <span><b>Venda:</b> R$${parseFloat(d.preco).toFixed(2).replace('.',',')}</span> <br>
+            <span><b>Custo:</b> R$${parseFloat(d.custo||0).toFixed(2).replace('.',',')}</span>
+            <br><span><b>Ativo:</b> ${d.ativo?'Sim':'Não'} | <b>Ordem:</b> ${d.ordem||''}</span>
+          </div>
+          <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary btn-sm" onclick="editarDoce('${d.id}')"><i class="bi bi-pencil"></i></button>
+            <button class="btn btn-outline-danger btn-sm" onclick="removerDoce('${d.id}')"><i class="bi bi-trash"></i></button>
+          </div>
+        </div>
+      </div>`;
+    });
+  }
+
+  document.getElementById("tabelaDoces").innerHTML = html;
+}
+
+function abrirModalDoce(id=null){
+  document.getElementById("doceId").value="";
+  document.getElementById("doceNome").value="";
+  document.getElementById("doceGrupo").value="TRADICIONAL";
+  document.getElementById("docePreco").value="";
+  document.getElementById("doceCusto").value="";
+  document.getElementById("doceAtivo").checked=true;
+  document.getElementById("doceOrdem").value="1";
+  if(id){
+    const d = doces.find(x=>x.id===id);
+    if(!d) return;
+    document.getElementById("doceId").value = d.id;
+    document.getElementById("doceNome").value = d.nome;
+    document.getElementById("doceGrupo").value = d.grupo;
+    document.getElementById("docePreco").value = d.preco;
+    document.getElementById("doceCusto").value = d.custo||"";
+    document.getElementById("doceAtivo").checked = !!d.ativo;
+    document.getElementById("doceOrdem").value = d.ordem||"1";
+  }
+  new bootstrap.Modal(document.getElementById("doceModal")).show();
+}
+document.getElementById("formDoce").onsubmit = function(e){
+  e.preventDefault();
+  const id = document.getElementById("doceId").value;
+  const nome = document.getElementById("doceNome").value;
+  const grupo = document.getElementById("doceGrupo").value;
+  const preco = parseFloat(document.getElementById("docePreco").value);
+  const custo = parseFloat(document.getElementById("doceCusto").value);
+  const ativo = document.getElementById("doceAtivo").checked;
+  const ordem = parseInt(document.getElementById("doceOrdem").value);
+  const obj = { nome, grupo, preco, custo, ativo, ordem };
+  if(id){
+    db.collection("doces").doc(id).update(obj).then(()=>carregarDoces());
+  }else{
+    db.collection("doces").add(obj).then(()=>carregarDoces());
+  }
+  bootstrap.Modal.getInstance(document.getElementById("doceModal")).hide();
+}
+function editarDoce(id){ abrirModalDoce(id);}
+function removerDoce(id){
+  if(confirm("Confirma remover este produto?")){
+    db.collection("doces").doc(id).delete().then(()=>carregarDoces());
+  }
+}
+
+// --- ALTERAÇÃO EM MASSA DOCES ---
+function abrirAlteracaoMassa(){
+  document.getElementById("massaGrupo").value="";
+  document.getElementById("massaPreco").value="";
+  document.getElementById("massaCusto").value="";
+  new bootstrap.Modal(document.getElementById("modalMassa")).show();
+}
+document.getElementById("formMassa").onsubmit = function(e){
+  e.preventDefault();
+  const grupo = document.getElementById("massaGrupo").value;
+  const preco = document.getElementById("massaPreco").value;
+  const custo = document.getElementById("massaCusto").value;
+  if(!grupo || (!preco && !custo)) {
+    alert('Informe o grupo e pelo menos um dos valores.');
+    return;
+  }
+  const docsGrupo = doces.filter(d=>d.grupo===grupo);
+  if(!docsGrupo.length) {
+    alert("Nenhum doce encontrado para esse grupo.");
+    return;
+  }
+  if(!confirm(`Deseja atualizar ${docsGrupo.length} doces do grupo ${grupo}?`)) return;
+  // Atualiza todos no Firestore
+  docsGrupo.forEach(d=>{
+    const obj = {};
+    if(preco) obj.preco = parseFloat(preco);
+    if(custo) obj.custo = parseFloat(custo);
+    db.collection("doces").doc(d.id).update(obj);
+  });
+  bootstrap.Modal.getInstance(document.getElementById("modalMassa")).hide();
+  setTimeout(carregarDoces, 700); // tempo para garantir atualização
+};
+
+window.reenviarRecuperacao = function(email) {
+  if(!email) {
+    alert('Usuário sem e-mail cadastrado.');
+    return;
+  }
+  if(confirm(`Deseja enviar um e-mail de recuperação de senha para:\n${email}?`)){
+    firebase.auth().sendPasswordResetEmail(email)
+      .then(() => alert('E-mail de recuperação enviado!'))
+      .catch(e => alert('Erro ao enviar: ' + (e.message || e)));
+  }
+}
+
+// --- RELATÓRIOS BONITO, COPIAR E PDF ---
+function gerarRelatorio(e){
+  e.preventDefault();
+  const inicio = document.getElementById("relInicio").value;
+  const fim = document.getElementById("relFim").value;
+  const vendedor = document.getElementById("relVendedor").value.toLowerCase();
+  const status = document.getElementById("relStatus").value;
+  let rel = pedidos;
+  if (inicio) rel = rel.filter(p=>{
+    const [dia,mes,ano]=p.dataHora.split(',')[0].split('/');
+    const data = `${ano}-${mes}-${dia}`;
+    return data >= inicio;
+  });
+  if (fim) rel = rel.filter(p=>{
+    const [dia,mes,ano]=p.dataHora.split(',')[0].split('/');
+    const data = `${ano}-${mes}-${dia}`;
+    return data <= fim;
+  });
+  if (vendedor) rel = rel.filter(p=> (p.DisplayName||"").toLowerCase().includes(vendedor) || (p.usuarioEmail||"").toLowerCase().includes(vendedor));
+  if (status) rel = rel.filter(p=>p.status===status);
+
+  let totalPedidos = rel.length, totalVendas=0, totalCusto=0, lucroTotal=0;
+  let html = "", textoPlano = "";
+  if (!totalPedidos) {
+    document.getElementById("botoesRelatorio").style.display = "none";
+    document.getElementById("resultadoRelatorio").innerHTML = "<div class='alert alert-warning'>Nenhum pedido encontrado no período/filtro!</div>";
+    return;
+  }
+
+  rel.forEach((p, idx) => {
+    totalVendas += typeof p.valorTotal === "string" ? parseFloat(p.valorTotal.replace(/[^\d,\.]/g, '').replace(',','.')) : (p.valorTotal||0);
+    const valorCusto = calcularValorCusto(p);
+    totalCusto += valorCusto;
+    const statusIcon = p.status=="PENDENTE"?"<i class='bi bi-hourglass-split text-warning'></i>":
+                      p.status=="APROVADO"?"<i class='bi bi-check2-circle text-info'></i>":
+                      p.status=="CONCLUIDO"?"<i class='bi bi-patch-check-fill text-success'></i>":"";
+    html += `
+    <div style="border-left:6px solid #ffe5a6;background:#fffbe7;border-radius:8px;padding:14px 20px;margin-bottom:15px;box-shadow:0 2px 12px #ffe08215;">
+      <div style="font-size:1.1em;margin-bottom:7px;">
+        <span style="font-weight:bold;"><i class="bi bi-box-seam"></i> Pedido #${p.numeroPedido||""}</span>
+        <span style="margin-left:20px;"><i class="bi bi-calendar"></i> ${p.dataHora||""}</span>
+        <span style="margin-left:20px;"><i class="bi bi-person"></i> ${p.DisplayName||p.usuarioEmail||""}</span>
+        <span style="margin-left:20px;">${statusIcon} <b>${p.status||""}</b></span>
+      </div>
+      <div>
+        <b><i class="bi bi-gift"></i> Caixa:</b> ${p.caixa||""} &nbsp; 
+        <b><i class="bi bi-hash"></i> Qtde:</b> ${p.quantidadeCaixas||1}
+      </div>
+      <div>
+        <b><i class="bi bi-list-ul"></i> Doces:</b>
+        <ul style="columns:2;list-style:circle;margin:8px 0 0 0;padding-left:16px;">
+        ${p.doces.map(d=>`<li>${d.quantidade} x ${d.nome}</li>`).join('')}
+        </ul>
+      </div>
+      <div style="margin-top:9px;font-size:1.07em;">
+        <span class="badge bg-success" style="font-size:1em;"><i class="bi bi-currency-dollar"></i> Cliente: R$${(typeof p.valorTotal==="string"?p.valorTotal:p.valorTotal?.toFixed(2)).replace('.',',')}</span>
+        <span class="badge bg-secondary ms-2" style="font-size:1em;"><i class="bi bi-coin"></i> Custo: R$${valorCusto.toFixed(2).replace('.',',')}</span>
+      </div>
+    </div>
+    `;
+    textoPlano += `Pedido #${p.numeroPedido} - ${p.DisplayName||''}\nData: ${p.dataHora||''}\nStatus: ${p.status}\nTipo: ${p.caixa||''} | Caixas: ${p.quantidadeCaixas||1}\n`;
+    textoPlano += p.doces.map(d=>`${d.quantidade} x ${d.nome}`).join('\n');
+    textoPlano += `\nValor Cliente: ${typeof p.valorTotal==="string"?p.valorTotal: (p.valorTotal?.toFixed(2)||'')}\nValor Custo: R$${valorCusto.toFixed(2).replace('.',',')}\n-------------------------\n`;
+  });
+  lucroTotal = totalVendas-totalCusto;
+  html += `
+    <div style="background:#fff3d4;border-radius:7px;padding:13px 10px;margin:10px 0 2px 0;font-size:1.11em;font-weight:600;">
+      <span style="margin-right:20px;"><i class="bi bi-collection"></i> Total de Pedidos: ${totalPedidos}</span>
+      <span style="margin-right:20px;"><i class="bi bi-cash-coin"></i> Total em vendas: <span style="color:#2196f3">R$${totalVendas.toFixed(2).replace('.',',')}</span></span>
+      <span style="margin-right:20px;"><i class="bi bi-coin"></i> Total custo: <span style="color:#ad8e54">R$${totalCusto.toFixed(2).replace('.',',')}</span></span>
+      <span><i class="bi bi-bar-chart"></i> Lucro: <span style="color:#43be4c">R$${lucroTotal.toFixed(2).replace('.',',')}</span></span>
+    </div>
+  `;
+
+  document.getElementById("resultadoRelatorio").innerHTML = html;
+  document.getElementById("botoesRelatorio").style.display = "block";
+  window.textoRelatorioPlano = textoPlano; // Para copiar
+  window.htmlRelatorioBonito = html; // Para PDF
+}
+function copiarRelatorio(){
+  navigator.clipboard.writeText(window.textoRelatorioPlano || "Nada gerado.").then(()=>alert("Relatório copiado!"));
+}
+function exportarResumoSelecionadosPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  let linhas = (document.getElementById("resumoText").textContent || '').split('\n');
+  let y = 10;
+  doc.setFont("helvetica","normal");
+  doc.setFontSize(14);
+  doc.text("Resumo dos pedidos selecionados - DoceGestorExpress", 12, y);
+  y+=8; doc.setFontSize(10);
+  linhas.forEach(line=>{
+    if(y>285){doc.addPage();y=10;}
+    doc.text(line,12,y); y+=5;
+  });
+  doc.save("ResumoPedidosSelecionados.pdf");
+}
+</script>
+</body>
+</html>

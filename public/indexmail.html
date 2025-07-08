@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>Doce Gestor Express</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700&display=swap" rel="stylesheet">
+
+  <style>
+    body { background: #f8f7f4; color: #4a3b28; font-family: 'Segoe UI', Arial, sans-serif; }
+    .main-card { max-width: 680px; margin: 32px auto 0 auto; background: #fff; border-radius: 18px; box-shadow: 0 8px 38px 0 rgba(0,0,0,0.10); padding: 38px 22px 32px 22px;}
+    @media (max-width: 400px) {
+      .main-card { margin: 8px 2px; padding:14px 2px;}
+    }
+    .dashboard-title {
+      font-family: 'Poppins', Arial, sans-serif;
+      font-size: 1.15rem;
+      letter-spacing: 1.1px;
+      font-weight: 700;
+      color: #a3791d;
+    }
+
+    /* Footer responsivo */
+    .footer-app {
+      background: #f4f3f1;
+      border-top: 1px solid #ece8df;
+      font-size: 0.99em;
+      letter-spacing: .2px;
+      box-shadow: 0 -2px 12px 0 rgba(100,70,20,0.03);
+      margin-top: 50px;
+    }
+    .btn-whatsapp-footer {
+      background: #43be4c11;
+      color: #2e7d32;
+      border: 1px solid #43be4c55;
+      border-radius: 999px;
+      transition: background 0.18s, color 0.18s;
+    }
+    .btn-whatsapp-footer:hover,
+    .btn-whatsapp-footer:focus {
+      background: #43be4c !important;
+      color: #fff !important;
+      border-color: #43be4c !important;
+      text-decoration: none;
+    }
+    @media (max-width: 576px) {
+      .footer-app {
+        font-size: 0.96em;
+        padding-left: 0;
+        padding-right: 0;
+      }
+      .footer-app .container {
+        padding: 1.1rem 0.3rem;
+      }
+    }
+
+    @media (max-width: 400px) {
+  .main-card { margin: 8px 2px; padding:14px 2px;}
+}
+    @keyframes snackbarIn {
+      0% { transform: translateX(-50%) translateY(80px); opacity:0; }
+      70% { opacity:1; }
+      100% { transform: translateX(-50%) translateY(0); opacity:1; }
+    }
+    @keyframes snackbarOut {
+      0% { transform: translateX(-50%) translateY(0); opacity:1; }
+      100% { transform: translateX(-50%) translateY(80px); opacity:0; }
+    }
+
+    #loginLogo { display:block; margin:0 auto 18px auto; border-radius: 8px; max-width:100px; width:50%; }
+    @media (max-width: 400px) {
+      .main-card { margin: 8px 2px; padding:14px 2px;}
+      #loginLogo { max-width:95vw; width:40%;}
+    }
+    .dash-header { display:flex; justify-content:space-between; align-items:center; margin-bottom: 22px;}
+    .dash-header .home-btn { font-size:1.3em;}
+    .pedido-card {
+      background:#fff; border-radius: 13px;
+      box-shadow: 0 2px 13px 0 rgba(210,181,131,.08);
+      margin-bottom:16px; padding:16px 14px 13px 14px; position:relative;
+      border-left: 6px solid #ffe5a6; transition: box-shadow 0.19s;
+    }
+    .pedido-card:hover { box-shadow:0 4px 16px 0 rgba(183,156,105,0.13);}
+    .pedido-status {
+      position:absolute; left:-6px; top:14px; border-radius:0 13px 13px 0; font-size:0.99em; font-weight:700;
+      padding:3px 12px 3px 9px; color:#fff; min-width:94px; display:flex; align-items:center; gap:5px;
+    }
+    .st-pendente { background: #ffa000; }
+    .st-aprovado { background: #42a5f5; }
+    .st-concluido { background: #43be4c; }
+    .st-pagamento { background: #7d5cff; }
+    .pedido-actions { position: absolute; right:11px; top:12px; display:flex; gap:7px;}
+    .pedido-actions .btn { font-size:1.02em; padding:2px 8px; border-radius:6px; }
+    .btn-refazer { background: #fffbe5; color: #ad903f; border: 1px solid #f3e3ad;}
+    .btn-editar { background: #eef6fd; color: #356797; border: 1px solid #b3c9df;}
+    .btn-cancelar { background: #faeaea; color: #c0353e; border: 1px solid #eeb5b9;}
+    .pedido-num { font-weight:700; font-size:1.09em; color:#ad903f;}
+    .pedido-itens { font-size:0.97em; color:#897846;}
+    .pedido-data { font-size:0.93em; color:#baa97c;}
+    .detalhes-pedido { display: none; background:#f5efe4; border-radius:7px; margin-top:10px; padding:9px 7px; border-left:4px solid #ad903f; font-size:1.03em;}
+    .pedido-tabela { width:100%; margin-top:6px;}
+    .pedido-tabela th, .pedido-tabela td { padding:4px 6px;}
+    .pedido-tabela th { background:#c49d65; color:#fff; border-radius: 2px;}
+    #paginacao {text-align:center; margin-top:20px;}
+    .page-btn { margin:0 5px; background:#c49d65; color:#fff; border:none; padding:5px 13px; border-radius:5px; font-size:1em; font-weight:600;}
+    .page-btn:disabled { background:#e8dac0; color:#a5a19b;}
+    /* FORMULARIO PEDIDO */
+    .pedido-topbar { display:flex; justify-content:space-between; align-items:center; gap: 8px; margin-bottom: 15px; border-bottom: 1px solid #f0e5d1; padding-bottom: 7px;}
+    .pedido-topbar .center { flex:1; display:flex; justify-content:center; }
+    .pedido-topbar .home-btn { font-size:1.21em; }
+    .tipo-pedido-card { background: #f9f6ed; border-radius: 11px; padding: 13px 12px 7px 12px; margin-bottom:12px; }
+    .grupo-card { border-radius: 1.05rem !important; box-shadow: 0 2px 12px 0 rgba(0,0,0,0.06); margin-bottom: 18px; border: none; background: #fcfaf6;}
+    .grupo-title { font-size: 1.11rem; font-weight: 700; color: #c49d65; margin-bottom: 10px; letter-spacing: 0.4px; display: flex; align-items: center; gap: 6px;}
+    .doce-item { display: flex; align-items: center; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #f3eee3;}
+    .doce-item:last-child { border-bottom: none; }
+    .doce-nome { font-size: 0.98rem; flex:1; }
+    .item-controls { display: flex; align-items: center; gap: 2px; }
+    .item-controls .btn { font-size: 1.04rem; width:28px; height:28px; padding:0; display: flex; align-items:center; justify-content: center; touch-action: manipulation;}
+    .qtd-label { font-size: 1.12rem; min-width: 23px; text-align: center; color: #604126; font-weight: 600; }
+    .quantidade-caixas-wrap-final {margin: 10px 0 10px 0;}
+    .quantidade-caixas-label {font-weight:600; color:#604126; margin-right:9px;}
+    .caixa-controls .btn {width:28px;height:28px;}
+    .btn-main { background:#c49d65; border:none; color:#fff; font-weight:600; font-size:1.01em; border-radius:8px; padding:10px 0; width:100%; }
+    .btn-main:disabled, .btn-main[disabled] { background: #eadcbf !important; color:#a49d65 !important; }
+    .btn-main:hover:not(:disabled) { background:#ad8e54; color:#fff; }
+    .badge-total { background: #fffbe2; color: #c49d65; border-radius: 8px; font-weight:600; font-size: 1.03em; padding: 2px 11px;}
+    .valor-total { color:#604126; font-size:1.07em; font-weight: 600;}
+    .alert { font-size: 0.98em; }
+    #resumoModal .modal-content { border-radius: 13px; }
+    .disabled-section { opacity: 0.42; pointer-events: none; }
+    /* Oculta form por padrão */
+    #formPedido { display: none;}
+
+@keyframes snackbarOut {
+  0% { transform: translateX(-50%) translateY(0); opacity:1; }
+  100% { transform: translateX(-50%) translateY(80px); opacity:0; }
+}
+#avisoCaixaCheia {
+  display: none;
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #5fa5f6;         /* azul alerta */
+  color: #fff;                 /* branco para contraste */
+  width: 60%;
+  max-width: 500px;
+  padding: 30px 25px;
+  border-radius: 16px;
+  box-shadow: 0 6px 32px 0 rgba(0,0,0,0.18);
+  font-size: 1.14em;
+  font-weight: 600;
+  z-index: 99999;
+  letter-spacing: .1px;
+  text-align: center;
+  animation: none;
+  padding: 15px 16px;    /* Reduziu o espaçamento interno */
+  font-size: 1em;
+}
+
+#avisoCaixaCheia i {
+  font-size: 2.5em;
+  color: #ffe082; /* amarelo/dourado para o ícone ficar destacado no azul */
+  display: block;
+  margin-bottom: 6px;
+}
+
+#loaderCentral {
+  display:none; position:fixed; left:0; top:0; width:100vw; height:100vh; 
+  background:rgba(255,255,255,0.74); z-index:12000; 
+  align-items:center; justify-content:center;
+  transition: 0.2s opacity;
+}
+
+
+
+  </style>
+</head>
+<body>
+
+  <nav id="mainNavbar" class="navbar navbar-expand-lg bg-white shadow-sm mb-3">
+    <div class="container">
+      <a class="navbar-brand d-flex align-items-center" href="#" id="navbarBrandArea"></a>
+      <div id="navbarUserArea" class="d-flex align-items-center gap-2" style="display:none;">
+        <span id="navbarUserName" class="d-flex align-items-center gap-2 fw-semibold"></span>
+        <button id="navbarLogoutBtn" class="btn btn-sm btn-outline-danger ms-2" title="Sair">
+          <i class="bi bi-box-arrow-right"></i>
+        </button>
+        <button id="navbarAdminBtn" class="btn btn-sm btn-outline-secondary ms-2" title="Painel Administrativo" style="display:none;">
+          <i class="bi bi-gear-fill"></i>
+        </button>
+      </div>
+      
+    </div>
+  </nav>
+  <div class="main-card">
+    <!-- LOGIN 
+    <div id="telaLogin">
+      <img src="logo.png" id="loginLogo" alt="Logo DoceGestorExpress" />
+      <h2 class="text-center fw-bold mb-3" style="color:#604126;">Entrar</h2>
+      <input id="loginEmail" class="form-control mb-2" placeholder="E-mail" type="email" autocomplete="username" />
+      <input id="loginSenha" class="form-control mb-2" placeholder="Senha" type="password" autocomplete="current-password" />
+      <button id="btnLogin" class="btn-main mb-2">Entrar</button>
+      <div id="loginMsg" class="alert alert-danger" style="display:none"></div>
+    </div>  -->
+    <!-- DASHBOARD -->
+    <div id="telaDashboard" style="display:none;">
+      <div class="dash-header">
+        <button class="btn btn-success btn-sm" id="btnNovoPedido"><i class="bi bi-plus-circle"></i> Novo Pedido</button>
+      </div>
+      <div class="mb-2">
+        <label for="filtroStatus" style="font-weight:600; color:#8c7e5e; margin-right:10px;">Status:</label>
+        <select id="filtroStatus" class="form-select form-select-sm d-inline" style="max-width:140px;">
+          <option value="todos">Todos</option>
+          <option value="pendente" selected>Pendente</option>
+          <option value="aprovado">Aprovado</option>
+          <option value="aguardando pagamento">Aguardando Pagamento</option>
+          <option value="concluido">Concluído</option>
+        </select>
+      </div>
+      <div id="listaPedidos"></div>
+      <div id="paginacao"></div>
+    </div>
+    <!-- Loader Central -->
+    <div id="loaderCentral" style="display:none; position:fixed; left:0; top:0; width:100vw; height:100vh; background:rgba(255,255,255,0.74); z-index:12000; align-items:center; justify-content:center;">
+      <div class="spinner-border text-warning" style="width: 3.7rem; height: 3.7rem;" role="status">
+        <span class="visually-hidden">Carregando...</span>
+      </div>
+    </div>
+
+    <div id="avisoCaixaCheia">
+      <i class="bi bi-box-seam-fill"></i>
+      <br>
+      Caixa cheia!
+    </div>
+    <!-- FORMULÁRIO DE PEDIDO -->
+    <div id="formPedido">
+      <div class="pedido-topbar">
+        <button class="btn btn-outline-primary btn-sm" id="btnVoltarDash"><i class="bi bi-list-task"></i> Meus pedidos</button>
+      </div>
+      <div class="tipo-pedido-card">
+        <div class="d-flex align-items-center gap-3 mb-1">
+          <i class="bi bi-box-seam fs-5 text-warning"></i>
+          <div class="fw-bold" style="font-size:1.1rem;">Tipo de Pedido</div>
+        </div>
+        <div class="d-flex gap-3 mt-2">
+          <div><input name="tipoPedido" type="radio" value="30" id="tp30" /><label for="tp30" class="ms-1">Caixa de 30</label></div>
+          <div><input name="tipoPedido" type="radio" value="49" id="tp49" /><label for="tp49" class="ms-1">Caixa de 49</label></div>
+          <div><input name="tipoPedido" type="radio" value="avulso" id="tpA" /><label for="tpA" class="ms-1">Unidade</label></div>
+        </div>
+        <div id="erroTipo" class="alert alert-warning mt-2" style="display:none"></div>
+      </div>
+      <div id="alertTipo" class="alert alert-info text-center" style="display:block">Selecione o tipo de pedido para começar!</div>
+      <div id="docesSection"></div>
+      <div class="d-flex justify-content-between align-items-center my-3">
+        <span class="badge-total" id="totalSelecionado">Total: 0</span>
+        <span class="valor-total" id="valorTotalPedido">R$0,00</span>
+      </div>
+      <div class="quantidade-caixas-wrap-final row align-items-center" id="caixasWrapFinal" style="display:none">
+        <div class="col-auto">
+          <span class="quantidade-caixas-label"><i class="bi bi-boxes"></i> Quantidade de caixas:</span>
+          <span class="caixa-controls">
+            <button class="btn btn-outline-secondary btn-sm" id="menosCaixa" type="button"><i class="bi bi-dash"></i></button>
+            <input id="qtdCaixasInput" type="number" min="1" value="1" style="width:50px; text-align:center; border-radius:7px; border:1px solid #dec286; margin:0 6px; font-weight:bold;" />
+            <button class="btn btn-outline-secondary btn-sm" id="maisCaixa" type="button"><i class="bi bi-plus"></i></button>
+          </span>
+        </div>
+      </div>
+      <div id="feedbackCaixa" class="text-danger mb-2 fw-bold"></div>
+      <button class="btn-main" disabled id="adicionarPedidoBtn"><i class="bi bi-plus-circle"></i> Adicionar ao Resumo</button>
+    </div>
+    <!-- MODAL RESUMO -->
+    <div class="modal fade" id="resumoModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Confirmação do Pedido</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <pre id="resumoVisual" style="white-space:pre-wrap; font-family:inherit;"></pre>
+          </div>
+          <div class="modal-footer flex-wrap gap-2">
+            <button class="btn btn-outline-secondary" id="voltarBtn" data-bs-dismiss="modal"><i class="bi bi-arrow-left"></i> Voltar</button>
+            <button class="btn btn-success" id="salvarPedido"><i class="bi bi-check-circle"></i> Confirmar Envio</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <footer class="footer-app mt-4 text-center small text-muted">
+    <div class="container py-3 px-2">
+      <div class="fw-bold mb-1" style="color:#b29c7c;">DoceGestorExpress 2025 
+        <span class="mx-1">|</span>
+        <span class="versao-label">Versão <span style="color:#a3791d;">1.0.3</span></span>
+      </div>
+      <div class="mb-1" style="color:#786448;">
+        Desenvolvido por AllanTechCode &reg;
+      </div>
+      <div class="d-flex flex-column flex-md-row justify-content-center align-items-center gap-2">
+        <a
+          href="https://wa.me/5542991319374?text=Ol%C3%A1%2C%20vim%20pelo%20DoceGestorExpress%20e%20preciso%20de%20suporte!"
+          target="_blank"
+          class="btn btn-whatsapp-footer d-inline-flex align-items-center justify-content-center gap-2 px-3 py-1 my-1"
+          style="font-weight:600; font-size:1.07em;"
+          aria-label="Abrir WhatsApp"
+        >
+          <i class="bi bi-whatsapp" style="font-size:1.32em;"></i>
+          Suporte via WhatsApp
+        </a>
+      </div>
+      <div class="mt-1" style="font-size: 0.97em; color:#b6a67e;">
+        Uso exclusivo Boniele Doces
+      </div>
+    </div>
+  </footer>
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyBaeSVaAa8RoX_dYW8_YKxY7naw9vq8OX8",
+  authDomain: "docepedidoexpress.firebaseapp.com",
+  projectId: "docepedidoexpress",
+  storageBucket: "docepedidoexpress.firebasestorage.app",
+  messagingSenderId: "599415242749",
+  appId: "1:599415242749:web:e2b4ad85d82aef617ba394"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+let maxUnidades = null, tipoSelecionado = null, tipoAnteriorSelecionado = null, bloqueioTrocaTipo = false, pedidoJaEnviado = false;
+let listaDoces = [], gruposCarregados = [];
+let qtdCaixas = 1;
+let pedidosTodos = [], paginaAtual = 1, porPagina = 8;
+let pedidoParaEditar = null;
+const iconsGrupo = { 
+  "TRADICIONAL": "🍬", 
+  "TRUFADO": "🍫", 
+  "MORANGO": "🍓", 
+  "MORANGO COM PISTACHE": "🥜" 
+};
+
+const statusLabels = {
+  "PENDENTE":  { label:"PENDENTE",  cls:"st-pendente",   icon:"hourglass-split" },
+  "APROVADO":  { label:"APROVADO",  cls:"st-aprovado",   icon:"check2" },
+  "AGUARDANDO PAGAMENTO": { label:"AGUARDANDO PAGAMENTO", cls:"st-pagamento", icon:"wallet2" },
+  "CONCLUIDO": { label:"CONCLUÍDO", cls:"st-concluido",  icon:"patch-check-fill" }
+};
+
+// ---- NAVBAR DINÂMICA ----
+function atualizarNavbar(tela, user = null) {
+  const navbarBrand = document.getElementById('navbarBrandArea');
+  const navbarUserArea = document.getElementById('navbarUserArea');
+  const navbarUserName = document.getElementById('navbarUserName');
+  navbarUserArea.style.display = 'none';
+
+  if (tela === 'login') {
+    navbarBrand.innerHTML = `
+      <i class="bi bi-lock-fill text-secondary" style="font-size:1.5em;"></i>
+      <span class="ms-2 fw-bold" style="font-size:1.05em; color:#a3791d;">Acesso Restrito</span>
+    `;
+  } else if ((tela === 'dashboard' || tela === 'pedido') && user) {
+    let title = tela === 'dashboard' ? 'Dashboard' : 'Fazer Pedido';
+    navbarBrand.innerHTML = `
+      <img src="logo.png" alt="Logo DoceGestorExpress" width="36" height="36" class="me-2 rounded-3">
+      <span class="dashboard-title">${title}</span>
+    `;
+    // Nome inicial aguardando...
+    navbarUserName.innerHTML = `
+      <i class="bi bi-person-circle" style="font-size:1.45em; color:#c49d65;"></i>
+      <span id="navbarUserText" style="cursor:pointer; text-decoration:underline;">Aguardando...</span>
+    `;
+    navbarUserArea.style.display = '';
+
+    // CLICÁVEL desde o início
+    setUserClickHandler();
+
+    // Busca nome pelo Firestore
+    db.collection("usuarios").doc(user.uid).get()
+    .then((doc) => {
+      let nomeFinal = null;
+      if (doc.exists && doc.data().nome) {
+        nomeFinal = doc.data().nome;
+      }
+      if (!nomeFinal && user.displayName) nomeFinal = user.displayName;
+      if (!nomeFinal && user.email) nomeFinal = user.email.split("@")[0];
+      if (!nomeFinal) nomeFinal = "Usuário";
+      navbarUserName.innerHTML = `
+        <i class="bi bi-person-circle" style="font-size:1.45em; color:#c49d65;"></i>
+        <span id="navbarUserText" style="cursor:pointer; text-decoration:underline;">${nomeFinal}</span>
+      `;
+      navbarUserArea.style.display = '';
+
+      // CLICÁVEL APÓS BUSCA FIRESTORE
+      setUserClickHandler();
+    })
+    .catch(() => {
+      navbarUserName.innerHTML = `
+        <i class="bi bi-person-circle" style="font-size:1.45em; color:#c49d65;"></i>
+        <span id="navbarUserText" style="cursor:pointer; text-decoration:underline;">Usuário</span>
+      `;
+      navbarUserArea.style.display = '';
+      setUserClickHandler();
+    });
+  }
+
+  // Função interna para evitar repetição
+  function setUserClickHandler() {
+    setTimeout(() => {
+      const nomeUserEl = document.getElementById('navbarUserText');
+      if (nomeUserEl) {
+        nomeUserEl.onclick = () => {
+          window.location.href = "auth.html?perfil";
+        };
+      }
+    }, 50);
+  }
+}
+
+
+
+
+// ---- EVENTOS DOM ----
+document.addEventListener("DOMContentLoaded", function() {
+      // Login
+     /* const btnLogin = document.getElementById("btnLogin");
+      /*if (btnLogin) {
+        btnLogin.onclick = function() {
+          const email = document.getElementById("loginEmail").value;
+          const senha = document.getElementById("loginSenha").value;
+          document.getElementById("loginMsg").style.display = "none";
+          auth.signInWithEmailAndPassword(email, senha)
+            .catch(error => {
+              document.getElementById("loginMsg").innerText = "Erro: " + (error.message || "Falha no login");
+              document.getElementById("loginMsg").style.display = "";
+            });
+        };
+      }*/
+      // Logout
+      /*const navbarLogoutBtn = document.getElementById("navbarLogoutBtn");
+      if (navbarLogoutBtn) navbarLogoutBtn.onclick = () => auth.signOut();*/
+
+      const navbarLogoutBtn = document.getElementById("navbarLogoutBtn");
+        if (navbarLogoutBtn) navbarLogoutBtn.onclick = () => {
+          auth.signOut().then(() => {
+            window.location.href = "auth.html?logout";
+          });
+        };
+
+
+      // Novo pedido
+      //const btnNovoPedido = document.getElementById("btnNovoPedido");
+     // if (btnNovoPedido) btnNovoPedido.onclick = () => { pedidoParaEditar=null; mostrarTela("pedido"); carregarDoces(); };
+
+      // Voltar para dashboard
+      //const btnVoltarDash = document.getElementById("btnVoltarDash");
+      //if (btnVoltarDash) btnVoltarDash.onclick = () => { mostrarTela("dashboard"); resetarBuscaPedidos(); };
+
+      // Abrir filtros pedidos
+      const btnAbrirFiltro = document.getElementById("btnAbrirFiltroPedidos");
+      if (btnAbrirFiltro) btnAbrirFiltro.onclick = function() {
+        document.getElementById("filtrosPedidosBox").style.display = "";
+      };
+    });
+function mostrarTela(nome) {
+  //document.getElementById('telaLogin').style.display = nome==="login"?"block":"none";
+  document.getElementById('telaDashboard').style.display = nome==="dashboard"?"block":"none";
+  document.getElementById('formPedido').style.display = nome==="pedido"?"block":"none";
+  atualizarNavbar(nome, auth.currentUser);
+}
+
+auth.onAuthStateChanged(user => {
+  if (!user) {
+     // Redireciona para a tela de autenticação
+     window.location.href = "auth.html";
+    return;
+  }
+  mostrarTela("dashboard");
+  carregarPedidosDoBanco(user.uid);
+
+  // --- Busca o documento do usuário pelo campo e-mail ---
+  db.collection("usuarios")
+    .where("email", "==", user.email.toLowerCase())
+    .get()
+    .then((snapshot) => {
+      const adminBtn = document.getElementById("navbarAdminBtn");
+      if (!snapshot.empty) {
+        const doc = snapshot.docs[0];
+        // alert(JSON.stringify(doc.data())); // Debug, pode remover
+        if ((doc.data().tipo || "").toLowerCase() === "admin") {
+          adminBtn.style.display = "";
+          adminBtn.onclick = () => window.location.href = "admin.html";
+        } else {
+          adminBtn.style.display = "none";
+        }
+      } else {
+        adminBtn.style.display = "none";
+        // alert("Usuário não encontrado no Firestore.");
+      }
+    })
+    .catch((error) => {
+      document.getElementById("navbarAdminBtn").style.display = "none";
+      // alert("Erro Firestore: " + error.message);
+    });
+});
+
+
+
+
+      
+/*document.getElementById("btnLogin").onclick = function() {
+  const email = document.getElementById("loginEmail").value;
+  const senha = document.getElementById("loginSenha").value;
+  document.getElementById("loginMsg").style.display = "none";
+  auth.signInWithEmailAndPassword(email, senha)
+    .catch(error => {
+      document.getElementById("loginMsg").innerText = "Erro: " + (error.message || "Falha no login");
+      document.getElementById("loginMsg").style.display = "";
+    });
+};*/
+
+document.getElementById("btnNovoPedido").onclick = () => {
+  pedidoParaEditar = null;
+  pedidoJaEnviado = false;
+  document.getElementById('salvarPedido').disabled = false;
+  document.getElementById('salvarPedido').innerHTML = '<i class="bi bi-check-circle"></i> Confirmar Envio';
+  mostrarTela("pedido");
+  carregarDoces();
+};
+
+document.getElementById("btnVoltarDash").onclick = () => { mostrarTela("dashboard"); carregarPedidosDoBanco(auth.currentUser.uid); };
+
+function formatarValor(valor) {
+  if (!valor && valor !== 0) return "R$0,00";
+  if (typeof valor === "string") {
+    const numStr = valor.replace(/[R$\s\.]/g, '').replace(',', '.');
+    valor = parseFloat(numStr);
+  }
+  if (isNaN(valor)) return "R$0,00";
+  return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+function carregarPedidosDoBanco(userId) {
+  mostrarLoader(true);
+  db.collection("pedidos")
+    .where("usuarioId", "==", userId)
+    .get()
+    .then(snapshot => {
+      pedidosTodos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      pedidosTodos.sort((a, b) => (b.numeroPedido || 0) - (a.numeroPedido || 0));
+      paginaAtual = 1;
+      carregarPedidos();
+    })
+    .finally(() => {
+      mostrarLoader(false);
+    });
+}
+function mostrarLoader(mostrar) {
+  const loader = document.getElementById('loaderCentral');
+  if (loader) loader.style.display = mostrar ? 'flex' : 'none';
+}
+
+function carregarPedidos() {
+  const filtro = document.getElementById("filtroStatus").value;
+  let pedidosFiltrados = pedidosTodos;
+  if (filtro !== "todos") {
+    pedidosFiltrados = pedidosTodos.filter(p => (p.status || "").toLowerCase() === filtro);
+  }
+  const inicio = (paginaAtual - 1) * porPagina;
+  const fim = inicio + porPagina;
+  const pedidosPagina = pedidosFiltrados.slice(inicio, fim);
+  const container = document.getElementById("listaPedidos");
+  container.innerHTML = "";
+
+  pedidosPagina.forEach((pedido) => {
+    const st = statusLabels[(pedido.status||"PENDENTE").toUpperCase()] || statusLabels["PENDENTE"];
+    let card = `
+  <div class="pedido-card">
+    <div class="pedido-status ${st.cls}"><i class="bi bi-${st.icon}"></i> ${st.label}</div>
+    <div class="pedido-actions">
+      <button class="btn btn-refazer" title="Duplicar pedido" onclick="refazerPedido('${pedido.id}')"><i class="bi bi-files"></i></button>
+      ${pedido.status === "PENDENTE" ? `<button class="btn btn-cancelar" onclick="cancelarPedido('${pedido.id}')"><i class="bi bi-x-lg"></i></button>` : ""}
+    </div>
+    <div class="mb-1" style="font-weight:700; color:#604126;">${pedido.DisplayName || "Sem Nome"}</div>
+    <div style="font-size:1.08em; color:#a8944d;">Pedido #${pedido.numeroPedido||'-'}</div>
+    <div class="pedido-data mb-1" style="color:#baa97c;">Data/Hora: ${pedido.dataHora || "-"}</div>
+    <div class="mb-1"><b>Tipo:</b> ${pedido.caixa || "—"}</div>
+    <div class="mb-1"><b>Quantidade de Caixas:</b> ${pedido.quantidadeCaixas || 1}</div>
+    <div class="mb-1"><b>Valor Total:</b> ${pedido.valorTotal ? formatarValor(pedido.valorTotal) : "—"}</div>
+    <button class="btn btn-outline-secondary btn-sm mt-1" onclick="mostrarDetalhes('${pedido.id}')"><i class="bi bi-list-ul"></i> Detalhes</button>
+    <div class="detalhes-pedido" id="detalhes-${pedido.id}">
+      <table class="pedido-tabela"><thead>
+        <tr><th>Qtd</th><th>Doce</th></tr>
+      </thead><tbody>
+        ${(pedido.doces||[]).map(d => `<tr><td>${d.quantidade}</td><td>${d.nome}</td></tr>`).join('')}
+      </tbody></table>
+      <div style="margin-top:7px; font-size:0.97em;"><b>Total de Doces:</b> ${pedido.totalDoces || 0}</div>
+    </div>
+  </div>
+`;
+
+    container.innerHTML += card;
+  });
+  renderPaginacao(pedidosFiltrados.length);
+}
+
+function mostrarDetalhes(id) {
+  const el = document.getElementById("detalhes-" + id);
+  el.style.display = el.style.display === "block" ? "none" : "block";
+}
+window.refazerPedido = (id) => {
+  if (confirm("\n\nDeseja duplicar pedido?? \n\n Após confirmar você podera editar os itens e salvar como novo pedido!!")) {
+    editarPedido(id, true);
+  }
+};
+
+function editarPedido(pedidoId, apenasRefazer = false) {
+  const pedido = pedidosTodos.find(p => p.id === pedidoId);
+  if (!pedido) return alert("Pedido não encontrado.");
+  pedidoParaEditar = pedido;
+  pedidoJaEnviado = false;
+  document.getElementById('salvarPedido').disabled = false;
+  document.getElementById('salvarPedido').innerHTML = '<i class="bi bi-check-circle"></i> Confirmar Envio';
+
+  mostrarTela("pedido");
+  carregarDoces(pedidoParaEditar);
+}
+
+function cancelarPedido(pedidoId) {
+  if (!confirm("Tem certeza que deseja cancelar este pedido?")) return;
+  db.collection("pedidos").doc(pedidoId).delete()
+    .then(() => {
+      pedidosTodos = pedidosTodos.filter(p => p.id !== pedidoId);
+      // Voltar para a tela principal SEM manter seleções
+      mostrarTela("dashboard");
+      carregarPedidosDoBanco(auth.currentUser.uid);
+    })
+    .catch(error => alert("Erro ao cancelar pedido: " + error.message));
+}
+
+
+document.getElementById("filtroStatus").addEventListener("change", () => {
+  paginaAtual = 1;
+  carregarPedidos();
+});
+
+function renderPaginacao(total) {
+  const div = document.getElementById("paginacao");
+  div.innerHTML = "";
+  const totalPaginas = Math.ceil(total / porPagina);
+  for (let i = 1; i <= totalPaginas; i++) {
+    const btn = document.createElement("button");
+    btn.className = "page-btn";
+    btn.innerText = i;
+    if (i === paginaAtual) btn.disabled = true;
+    btn.onclick = () => { paginaAtual = i; carregarPedidos(); };
+    div.appendChild(btn);
+  }
+}
+
+// ---- FORMULÁRIO DE PEDIDO ----
+function carregarDoces(prefillPedido=null) {
+  db.collection("doces").where("ativo", "==", true).orderBy("ordem").get().then(snapshot => {
+    listaDoces = []; gruposCarregados = [];
+    snapshot.forEach(doc => {
+      const d = doc.data();
+      listaDoces.push({ nome: d.nome, grupo: d.grupo, preco: d.preco });
+      if(!gruposCarregados.includes(d.grupo)) gruposCarregados.push(d.grupo);
+    });
+    renderizarDoces(prefillPedido);
+    inicializarInteracao(prefillPedido);
+  });
+}
+function renderizarDoces(prefillPedido=null) {
+  const section = document.getElementById('docesSection');
+  section.innerHTML = '';
+  gruposCarregados.forEach(grupo => {
+    let docesDoGrupo = listaDoces.filter(d => d.grupo === grupo);
+    let iconeGrupo = iconsGrupo[grupo] || "";
+    let precoGrupo = docesDoGrupo.length ? docesDoGrupo[0].preco : 0;
+    let htmlGrupo = `<div class="card grupo-card"><div class="card-body">
+      <div class="grupo-title">${iconeGrupo} ${grupo}<span class="ms-auto" style="font-weight:400;font-size:.96em;">R$${precoGrupo.toFixed(2).replace('.',',')}</span></div>`;
+    docesDoGrupo.forEach(doce => {
+      let qtd = 0;
+      if(prefillPedido && prefillPedido.doces) {
+        let dFind = prefillPedido.doces.find(e=>e.nome===doce.nome);
+        if(dFind) qtd = dFind.quantidade;
+      }
+      htmlGrupo += `<div class="doce-item" data-preco="${doce.preco}">
+        <span class="doce-nome">${doce.nome}</span>
+        <div class="item-controls">
+          <button class="btn btn-light menos" type="button"><i class="bi bi-dash-lg"></i></button>
+          <span class="qtd-label">${qtd}</span>
+          <button class="btn btn-light mais" type="button"><i class="bi bi-plus-lg"></i></button>
+        </div>
+      </div>`;
+    });
+    htmlGrupo += `</div></div>`;
+    section.innerHTML += htmlGrupo;
+  });
+}
+function inicializarInteracao(prefillPedido=null) {
+  const caixasWrapFinal = document.getElementById('caixasWrapFinal');
+  const qtdCaixasInput = document.getElementById('qtdCaixasInput');
+  document.getElementById('menosCaixa').onclick = function() {
+    if(qtdCaixas > 1) { qtdCaixas--; qtdCaixasInput.value = qtdCaixas; atualizaEstadoBotoes(); }
+  };
+  document.getElementById('maisCaixa').onclick = function() {
+    qtdCaixas++; qtdCaixasInput.value = qtdCaixas; atualizaEstadoBotoes();
+  };
+  qtdCaixasInput.oninput = function() {
+    let n = parseInt(this.value,10);
+    if(isNaN(n) || n < 1) n = 1;
+    qtdCaixas = n; this.value = qtdCaixas; atualizaEstadoBotoes();
+  };
+
+  // Preencher tipo e caixas se for duplicação/edição
+  if(prefillPedido) {
+    let tp = prefillPedido.caixa && prefillPedido.caixa.includes("30") ? "30" :
+             prefillPedido.caixa && prefillPedido.caixa.includes("49") ? "49" : "avulso";
+    document.getElementById("tp30").checked = tp==="30";
+    document.getElementById("tp49").checked = tp==="49";
+    document.getElementById("tpA").checked  = tp==="avulso";
+    tipoSelecionado = tp; tipoAnteriorSelecionado = tp;
+    qtdCaixas = prefillPedido.quantidadeCaixas || 1;
+    qtdCaixasInput.value = qtdCaixas;
+    caixasWrapFinal.style.display = (tp==="30"||tp==="49") ? "" : "none";
+    maxUnidades = tp === '30' ? 30 : tp === '49' ? 49 : null;
+    document.getElementById('alertTipo').style.display = "none";
+  } else {
+    tipoSelecionado = tipoAnteriorSelecionado = null;
+    document.getElementById("tp30").checked = false;
+    document.getElementById("tp49").checked = false;
+    document.getElementById("tpA").checked = false;
+    caixasWrapFinal.style.display = "none";
+    qtdCaixas = 1;
+    qtdCaixasInput.value = 1;
+    document.getElementById('alertTipo').style.display = "block";
+  }
+  document.querySelectorAll('input[name="tipoPedido"]').forEach(radio => {
+    radio.onchange = function() {
+      if(bloqueioTrocaTipo) return;
+      if(tipoAnteriorSelecionado && tipoAnteriorSelecionado !== this.value) {
+        let totalSelecionado = updateTotal();
+        if(totalSelecionado > 0) {
+          const confirmar = confirm("Você vai perder todas as seleções e o pedido será reiniciado. Deseja continuar?");
+          if(!confirmar) {
+            bloqueioTrocaTipo = true;
+            document.querySelector(`input[name="tipoPedido"][value="${tipoAnteriorSelecionado}"]`).checked = true;
+            bloqueioTrocaTipo = false;
+            return;
+          } else {
+            document.querySelectorAll('.qtd-label').forEach(span => span.textContent = "0");
+          }
+        }
+      }
+      tipoSelecionado = this.value;
+      tipoAnteriorSelecionado = tipoSelecionado;
+      if(tipoSelecionado === '30' || tipoSelecionado === '49') {
+        caixasWrapFinal.style.display = '';
+        maxUnidades = tipoSelecionado === '30' ? 30 : 49;
+      } else {
+        caixasWrapFinal.style.display = 'none';
+        qtdCaixas = 1;
+        qtdCaixasInput.value = 1;
+        maxUnidades = null;
+      }
+      document.getElementById('erroTipo').style.display = "none";
+      document.getElementById('docesSection').classList.remove('disabled-section');
+      atualizaEstadoBotoes();
+      document.getElementById('feedbackCaixa').innerText = "";
+      document.getElementById('alertTipo').style.display = "none";
+    };
+  });
+  document.querySelectorAll('.doce-item').forEach(item => {
+    const menos = item.querySelector('.menos');
+    const mais = item.querySelector('.mais');
+    const quantidade = item.querySelector('.qtd-label');
+    menos.onclick = () => { let q = parseInt(quantidade.textContent,10); if(q>0) quantidade.textContent = q-1; atualizaEstadoBotoes();};
+    mais.onclick = () => { 
+  let q = parseInt(quantidade.textContent,10); 
+  if(tipoSelecionado === "30" || tipoSelecionado === "49") {
+    quantidade.textContent = q+1;
+  } else {
+    quantidade.textContent = q+1;
+  }
+  atualizaEstadoBotoes();
+};
+
+
+  });
+  atualizaEstadoBotoes();
+}
+function updateTotal() {
+  let total = 0;
+  document.querySelectorAll('.qtd-label').forEach(span => { total += parseInt(span.textContent,10); });
+  document.getElementById('totalSelecionado').textContent = "Total: " + total;
+  return total;
+}
+function atualizaEstadoBotoes() {
+  const total = updateTotal();
+  let valorTotal = 0;
+  let feedback = "";
+  let tipoSelecionadoAtivo = !!tipoSelecionado;
+
+  document.querySelectorAll('.doce-item').forEach(item => {
+    const menos = item.querySelector('.menos');
+    const mais = item.querySelector('.mais');
+    const quantidade = parseInt(item.querySelector('.qtd-label').textContent, 10);
+    const preco = parseFloat(item.getAttribute('data-preco'));
+    valorTotal += quantidade * preco;
+
+    if(!tipoSelecionadoAtivo) {
+      menos.disabled = true;
+      mais.disabled = true;
+      menos.classList.add('disabled');
+      mais.classList.add('disabled');
+      return;
+    }
+    menos.classList.remove('disabled');
+    mais.classList.remove('disabled');
+    if(tipoSelecionado === "30" || tipoSelecionado === "49") {
+      mais.disabled = (total >= maxUnidades);
+      menos.disabled = quantidade <= 0;
+    } else {
+      menos.disabled = quantidade <= 0;
+      mais.disabled = false;
+    }
+  });
+  document.getElementById('valorTotalPedido').textContent = `R$${(valorTotal * (tipoSelecionado==='30'||tipoSelecionado==='49'?qtdCaixas:1)).toFixed(2).replace('.', ',')}`;
+  if(!tipoSelecionadoAtivo) {
+    document.getElementById('alertTipo').style.display = "block";
+  } else {
+    document.getElementById('alertTipo').style.display = "none";
+  }
+  // Validação de adicionar pedido
+  let podeAdicionar = false;
+  if(tipoSelecionado === "30" || tipoSelecionado === "49") {
+    podeAdicionar = (total === maxUnidades);
+    if(total < maxUnidades) feedback = `Faltam ${maxUnidades-total} doces para completar a caixa.`;
+    else if(total > maxUnidades) feedback = `Passe o total para exatamente ${maxUnidades} doces.`;
+    else feedback = "";
+  } else if(tipoSelecionado === "avulso") {
+    podeAdicionar = (total >= 1);
+    feedback = !podeAdicionar ? "Selecione ao menos 1 doce." : "";
+  }
+  if(total === maxUnidades){
+      mostrarAvisoCaixaCheia();
+  }
+  document.getElementById('adicionarPedidoBtn').disabled = !podeAdicionar || !tipoSelecionado;
+  document.getElementById('feedbackCaixa').innerText = feedback;
+}
+function mostrarAvisoCaixaCheia() {
+  const aviso = document.getElementById('avisoCaixaCheia');
+  aviso.style.display = 'block';
+  aviso.style.animation = 'snackbarIn 0.55s cubic-bezier(.3,1.45,.7,1)';
+  setTimeout(() => {
+    aviso.style.animation = 'snackbarOut 0.44s cubic-bezier(.4,1.15,.5,1)';
+    setTimeout(() => {
+      aviso.style.display = 'none';
+      aviso.style.animation = 'none';
+    }, 440);
+  }, 3500);
+  // Rola até o final da página
+  window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+}
+
+function mostrarNotificacao(tipo, mensagem) {
+  let toast = document.createElement("div");
+  toast.className = "toast";
+  toast.style.background = tipo === "success" ? "#4caf50" : "#f44336";
+  toast.innerText = mensagem;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3500);
+}
+// Adicionar ao Pedido (Resumo)
+document.getElementById('adicionarPedidoBtn').onclick = function() {
+  mostrarResumoPedido();
+};
+function mostrarResumoPedido() {
+  const totalDoces = updateTotal();
+  let valorTotal = document.getElementById('valorTotalPedido').textContent;
+  let resumo = '';
+  if(tipoSelecionado === "avulso") {
+    resumo += `Tipo de Pedido: Unidade\nQuantidade de doces: ${totalDoces}\n\nDoces:\n`;
+    document.querySelectorAll('.doce-item').forEach(item => {
+      const quantidade = parseInt(item.querySelector('.qtd-label').textContent, 10);
+      if(quantidade>0) resumo += `${quantidade} ${item.querySelector('.doce-nome').textContent}\n`;
+    });
+    resumo += `\nValor total: ${valorTotal}`;
+  } else if(tipoSelecionado === "30" || tipoSelecionado === "49") {
+    resumo += `Tipo de Pedido: Caixa de ${tipoSelecionado}\nQuantidade de caixas: ${qtdCaixas}\nTotal de doces: ${totalDoces} por caixa\n\nDoces de cada caixa:\n`;
+    document.querySelectorAll('.doce-item').forEach(item => {
+      const quantidade = parseInt(item.querySelector('.qtd-label').textContent, 10);
+      if(quantidade>0) resumo += `${quantidade} ${item.querySelector('.doce-nome').textContent}\n`;
+    });
+    resumo += `\nObs: Este pedido será aplicado em ${qtdCaixas} caixa(s).\nValor total: ${valorTotal}`;
+  }
+  document.getElementById('resumoVisual').textContent = resumo;
+  const resumoModal = new bootstrap.Modal(document.getElementById('resumoModal'));
+  resumoModal.show();
+}
+
+document.getElementById('voltarBtn').onclick = () => {};
+
+
+
+document.getElementById("salvarPedido").onclick = async function() {
+  if(pedidoJaEnviado) return;
+  pedidoJaEnviado = true; this.disabled=true; this.innerHTML='<i class="bi bi-check-circle"></i> Gravando...';
+  const user = auth.currentUser;
+  const nome = user.displayName || user.email.split('@')[0];
+  const tipo = tipoSelecionado;
+  const doces = [];
+  let total = 0;
+  document.querySelectorAll('.doce-item').forEach(item => {
+    const quantidade = parseInt(item.querySelector('.qtd-label').textContent,10);
+    if(quantidade>0) doces.push({nome: item.querySelector('.doce-nome').textContent, quantidade});
+    total += quantidade;
+  });
+  const controleRef = db.collection("controle").doc("contadorPedidos");
+  let pedidoParaEmail = null; // NOVO
+
+  try {
+    let novoNumero = 1;
+    await db.runTransaction(async (transaction) => {
+      const doc = await transaction.get(controleRef);
+      if(doc.exists) novoNumero = doc.data().ultimoNumero+1;
+      transaction.set(controleRef, { ultimoNumero: novoNumero });
+      const pedido = {
+        DisplayName: nome, caixa: tipo==='30'?'Caixa de 30':tipo==='49'?'Caixa de 49':'Unidade',
+        dataHora: new Date().toLocaleString('pt-BR'), doces, totalDoces: total,
+        valorTotal: document.getElementById('valorTotalPedido').textContent,
+        usuarioId: user.uid, status:"PENDENTE", numeroPedido: novoNumero,
+        quantidadeCaixas: (tipoSelecionado==='avulso'?0:qtdCaixas)
+      };
+      const pedidoRef = db.collection("pedidos").doc();
+      transaction.set(pedidoRef, pedido);
+      pedidoParaEmail = pedido; // <-- CAPTURA AQUI
+    });
+
+    // ENVIA O E-MAIL
+    if (pedidoParaEmail) {
+      enviarEmailPedidoRecebido(pedidoParaEmail, user.email)
+        .then(() => mostrarNotificacao("success", "Pedido recebido! Um e-mail de confirmação foi enviado."))
+        .catch(() => mostrarNotificacao("error", "Pedido salvo, mas não foi possível enviar o e-mail."));
+    }
+
+    const resumoModalInstance = bootstrap.Modal.getInstance(document.getElementById('resumoModal'));
+    if (resumoModalInstance) resumoModalInstance.hide();
+    document.getElementById('salvarPedido').innerHTML = '<i class="bi bi-check2-circle"></i> Pedido Gravado!';
+    setTimeout(()=>{
+      mostrarTela("dashboard");
+      carregarPedidosDoBanco(auth.currentUser.uid);
+    }, 1200);
+
+  } catch(error) {
+    alert("Erro ao salvar pedido: "+error.message);
+    this.disabled = false; this.innerHTML='<i class="bi bi-check-circle"></i> Confirmar Envio';
+    pedidoJaEnviado = false;
+  }
+};
+
+
+function enviarEmailPedidoRecebido(pedido, usuarioEmail) {
+  let lista = pedido.doces.map(d => `${d.quantidade} ${d.nome}`).join("<br>");
+  let corpoHtml = `
+    <table style="max-width:440px;margin:auto;background:#fffbe9;border-radius:18px;font-family:'Segoe UI',Arial,sans-serif;padding:28px 18px;border:1.5px solid #ffe6ad;">
+      <tr>
+        <td align="center" style="padding-bottom:15px;">
+          <img src="https://docepedidoexpress.web.app/logo.png" alt="Logo Boniele Doces" style="max-width:92px;border-radius:13px;">
+        </td>
+      </tr>
+      <tr>
+        <td style="color:#b08b3a;font-size:1.12em;font-weight:bold;text-align:center;padding-bottom:6px;">Seu pedido foi registrado!</td>
+      </tr>
+      <tr>
+        <td style="color:#534123;font-size:1.06em;padding-bottom:8px;">
+          Olá <b>${pedido.DisplayName || "Cliente"}</b>!<br>
+          Recebemos o seu pedido <b>#${pedido.numeroPedido}</b>.<br>
+          <span style="color:#7c6330;">Confira abaixo o resumo:</span>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <div style="background:#fff6db;border-radius:10px;padding:13px 11px;font-size:1.07em;margin-bottom:10px;">
+            <b>Tipo:</b> ${pedido.caixa}<br>
+            <b>Caixas:</b> ${pedido.quantidadeCaixas}<br>
+            <b>Sabores:</b><br>
+            ${lista}<br>
+            <b>Valor total:</b> ${pedido.valorTotal}<br>
+            <b>Data/Hora:</b> ${pedido.dataHora}
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td style="font-size:1.03em;color:#967a38;padding-bottom:12px;">
+          Em breve entraremos em contato para confirmação do pagamento e detalhes de entrega.<br>
+          <b>Em caso de dúvidas, estamos à disposição!</b>
+        </td>
+      </tr>
+      <tr>
+        <td align="center" style="color:#d2ab61;font-size:0.97em;padding-top:10px;">
+          <i>Equipe Boniele Doces &mdash; DoceGestorExpress</i><br>
+          <span style="color:#b6a67e;">(Não responda este e-mail)</span>
+        </td>
+      </tr>
+    </table>
+  `;
+
+  return fetch('https://emailsenderpedido-production.up.railway.app/enviar-email', {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      to_email: usuarioEmail,
+      to_admin: "docegestorexpress@gmail.com",
+      subject: "Seu pedido foi registrado!",
+      message: corpoHtml
+    })
+  }).then(res => res.json());
+}
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/firebase-messaging-sw.js')
+    .then(function(registration) {
+      console.log('Service Worker registrado:', registration);
+      iniciarPush();
+    })
+    .catch(function(err) {
+      console.error('Erro ao registrar Service Worker:', err);
+    });
+}
+
+function iniciarPush() {
+  const messaging = firebase.messaging();
+  messaging.getToken({
+      vapidKey: "BPUZStPrATnyyqQjziA8ZEYGTwKu_Yq7xs-wjrDqNVs6NRCpNd9vDT7gGZBnB3luWxWj2mOI3X457rcE2ghLO4U" // Copie dos "Certificados push da Web"
+  })
+  .then((currentToken) => {
+    if (currentToken) {
+      console.log('Token de push:', currentToken);
+      // Salve esse token no Firestore junto ao usuário autenticado!
+      salvarTokenNoFirestore(currentToken);
+    } else {
+      console.warn('Sem token, usuário não concedeu permissão');
+    }
+  })
+  .catch((err) => {
+    console.error('Erro ao buscar token:', err);
+  });
+}
+
+// Função para salvar o token no Firestore (exemplo)
+function salvarTokenNoFirestore(token) {
+  const user = firebase.auth().currentUser;
+  if (!user) return;
+  firebase.firestore().collection("usuarios").doc(user.uid).set({
+    pushToken: token
+  }, { merge: true });
+}
+
+
+
+
+</script>
+</body>
+</html>

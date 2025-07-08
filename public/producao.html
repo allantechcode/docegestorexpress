@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Painel de Produção - DoceGestorExpress</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Bootstrap 5 CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <!-- jsPDF CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    body {
+      background: #f5f7fa;
+    }
+    .card-prod {
+      min-width: 110px;
+      max-width: 180px;
+      margin-bottom: 12px;
+      box-shadow: 0 1px 5px 0 rgba(0,0,0,0.08);
+      border-radius: 0.8rem !important;
+      transition: transform 0.1s;
+      padding: 0;
+      background: #fff;
+    }
+    .card-prod .card-body {
+      padding: 12px 5px 8px 5px;
+    }
+    .sticky-top-filtros {
+      z-index: 99;
+      top: 0;
+      background: #f5f7fa;
+      border-bottom: 1px solid #e9ecef;
+      padding-top: 1rem;
+      padding-bottom: 0.5rem;
+    }
+    .card-total {
+      border-radius: 1rem !important;
+      min-height: 110px;
+      box-shadow: 0 2px 10px 0 rgba(0,0,0,0.07);
+    }
+    .btn-filtrar.active {
+      background: #c49d65 !important;
+      color: #fff !important;
+    }
+    .bi {
+      vertical-align: -0.18em;
+    }
+    @media (min-width: 576px) {
+      #areaCards .col-md-3 {
+        flex: 0 0 auto;
+        width: 25%; /* 4 por linha */
+      }
+    }
+    @media (min-width: 992px) {
+      #areaCards .col-lg-2 {
+        flex: 0 0 auto;
+        width: 16.66%; /* 6 por linha */
+      }
+    }
+    @media (max-width: 600px) {
+      .card-prod { min-width: 100%; max-width: 100%; }
+    }
+    #telaLogin {
+      max-width:340px;
+      margin:50px auto;
+      padding:30px 22px 24px 22px;
+      background:#fff;
+      border-radius:12px;
+      box-shadow:0 4px 16px rgba(0,0,0,0.12);
+      display:none;
+    }
+  </style>
+</head>
+<body>
+  <!-- TELA DE LOGIN -->
+  <div id="telaLogin">
+    <img src="logo.png" alt="Logo DoceGestorExpress" style="max-width:110px;margin:0 auto 14px auto;display:block;">
+    <h2 style="text-align:center;margin-bottom:20px;font-weight:700;font-size:1.4rem;color:#604126;">Login Produção</h2>
+    <input id="loginEmail" class="form-control mb-2" placeholder="E-mail" type="email" autocomplete="username" style="margin-bottom:12px;" />
+    <input id="loginSenha" class="form-control mb-2" placeholder="Senha" type="password" autocomplete="current-password" style="margin-bottom:14px;" />
+    <button id="btnLogin" class="btn btn-primary w-100" style="background:#c49d65;border:none;font-weight:700;font-size:1.1rem;">Entrar</button>
+    <div id="loginMsg" style="color:#c0353e;margin-top:12px;font-size:.97rem;min-height:22px;text-align:center;"></div>
+  </div>
+
+  <!-- NAVBAR -->
+  <nav class="navbar navbar-expand-lg bg-white shadow-sm mb-3">
+    <div class="container">
+      <a class="navbar-brand d-flex align-items-center" href="#">
+        <img src="logo.png" alt="Logo DoceGestorExpress" width="38" height="38" class="me-2">
+        <span class="fw-bold" style="letter-spacing: 1px;">Painel de Produção</span>
+      </a>
+      <span class="ms-auto small text-muted">DoceGestorExpress <i class="bi bi-patch-check-fill text-success"></i></span>
+    </div>
+  </nav>
+
+  <!-- BOX USUÁRIO LOGADO E LOGOUT -->
+  <div class="container mb-3">
+    <div id="usuarioLogadoBox" class="alert alert-secondary small text-center" style="display:none"></div>
+    <div id="btnLogoutBox" style="text-align:center;margin-bottom:18px;display:none;">
+      <button id="btnLogout" class="btn btn-outline-danger btn-sm">Sair</button>
+    </div>
+  </div>
+
+  <!-- PAINEL PRINCIPAL (inicialmente oculto) -->
+  <div id="telaPainel" style="display:none;">
+    <div class="container pb-4">
+      <!-- Totalizadores -->
+      <div class="row g-3 mb-2">
+        <div class="col-md-4">
+          <div class="card card-total border-0 shadow-sm bg-light">
+            <div class="card-body d-flex align-items-center">
+              <i class="bi bi-box2-fill display-6 text-primary me-3"></i>
+              <div>
+                <div class="fw-bold fs-5" id="totalCaixas">-</div>
+                <div class="small text-muted">Total de Caixas</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card card-total border-0 shadow-sm bg-light">
+            <div class="card-body d-flex align-items-center">
+              <i class="bi bi-cupcake-fill display-6 text-danger me-3"></i>
+              <div>
+                <div class="fw-bold fs-5" id="totalDoces">-</div>
+                <div class="small text-muted">Total de Doces</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card card-total border-0 shadow-sm bg-light">
+            <div class="card-body d-flex align-items-center">
+              <i class="bi bi-person-lines-fill display-6 text-success me-3"></i>
+              <div>
+                <div class="fw-bold fs-5" id="totalPedidos">-</div>
+                <div class="small text-muted">Pedidos Pendentes</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modo de visualização -->
+      <div class="mb-3 d-flex gap-2 flex-wrap">
+        <button id="btnModoCards" class="btn btn-outline-primary btn-filtrar active"><i class="bi bi-grid-3x3-gap"></i> Cards</button>
+        <button id="btnModoTabela" class="btn btn-outline-secondary btn-filtrar"><i class="bi bi-table"></i> Tabela</button>
+        <button id="btnModoMontagem" class="btn btn-outline-success btn-filtrar"><i class="bi bi-boxes"></i> Montagem de Caixas</button>
+      </div>
+
+      <!-- Filtros -->
+      <div class="row sticky-top-filtros align-items-center mb-3">
+        <div class="col-auto mb-2">
+          <button class="btn btn-outline-primary btn-filtrar active" id="btnVerGeral">
+            <i class="bi bi-list-columns-reverse"></i> Produção Geral
+          </button>
+          <button class="btn btn-outline-secondary btn-filtrar" id="btnVerVendedor">
+            <i class="bi bi-person-badge"></i> Por Vendedor
+          </button>
+        </div>
+        <div class="col-auto" id="filtroVendedor" style="display:none;">
+          <select class="form-select" id="selectVendedor"></select>
+        </div>
+        <div class="col-auto ms-auto mb-2">
+          <button class="btn btn-outline-success" id="btnAtualizar"><i class="bi bi-arrow-repeat"></i> Atualizar</button>
+        </div>
+      </div>
+
+      <!-- Exibição cards, tabela e montagem -->
+      <div id="areaCards" class="row g-3 mb-4"></div>
+      <div id="areaTabela" class="mb-4" style="display:none"></div>
+      <div id="areaMontagem" class="mb-4" style="display:none"></div>
+
+      <!-- Toasts -->
+      <div class="position-fixed top-0 end-0 p-3" style="z-index: 9999">
+        <div id="toastNotificacao" class="toast align-items-center text-bg-primary border-0" role="alert" aria-live="assertive" aria-atomic="true">
+          <div class="d-flex">
+            <div class="toast-body" id="toastMsg">Atualizando painel...</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // ---- CONFIG FIREBASE (seu projeto) ----
+    const firebaseConfig = {
+      apiKey: "AIzaSyBaeSVaAa8RoX_dYW8_YKxY7naw9vq8OX8",
+      authDomain: "docepedidoexpress.firebaseapp.com",
+      projectId: "docepedidoexpress",
+      storageBucket: "docepedidoexpress.firebasestorage.app",
+      messagingSenderId: "599415242749",
+      appId: "1:599415242749:web:e2b4ad85d82aef617ba394"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    let pedidosPendentes = [];
+    let resumoSabores = {};
+    let vendedoresUnicos = [];
+    let agrupadasMontagem = {};
+
+    async function carregarPedidos() {
+      showToast("Carregando pedidos pendentes...");
+      const snapshot = await db.collection("pedidos").where("status", "==", "PENDENTE").get();
+      pedidosPendentes = [];
+      snapshot.forEach(doc => {
+        let pedido = doc.data();
+        pedido.id = doc.id;
+        pedidosPendentes.push(pedido);
+      });
+      showToast("Pedidos carregados!", "success");
+      montarResumo();
+    }
+
+    function montarResumo() {
+      resumoSabores = {};
+      vendedoresUnicos = [];
+
+      let totalDoces = 0, totalCaixas = 0;
+
+      pedidosPendentes.forEach(pedido => {
+        if (pedido.doces && Array.isArray(pedido.doces)) {
+          pedido.doces.forEach(item => {
+            const sabor = item.nome || item.sabor;
+            const quantidade = Number(item.quantidade || item.qtd) || 0;
+            totalDoces += quantidade;
+            if (!resumoSabores[sabor]) resumoSabores[sabor] = 0;
+            resumoSabores[sabor] += quantidade;
+          });
+        }
+        if(pedido.quantidadeCaixas) totalCaixas += Number(pedido.quantidadeCaixas);
+        else if(pedido.qtdCaixas) totalCaixas += Number(pedido.qtdCaixas);
+        if (pedido.DisplayName && !vendedoresUnicos.includes(pedido.DisplayName)) {
+          vendedoresUnicos.push(pedido.DisplayName);
+        }
+      });
+
+      document.getElementById('totalDoces').innerText = totalDoces;
+      document.getElementById('totalCaixas').innerText = totalCaixas;
+      document.getElementById('totalPedidos').innerText = pedidosPendentes.length;
+
+      renderSabores();
+      montarSelectVendedor();
+    }
+
+    function renderSabores(filtroVendedor=null) {
+      const areaCards = document.getElementById("areaCards");
+      const areaTabela = document.getElementById("areaTabela");
+      const areaMontagem = document.getElementById("areaMontagem");
+
+      let sabores = {};
+      let caixas = [];
+
+      let pedidosFiltrados = filtroVendedor
+        ? pedidosPendentes.filter(p => p.DisplayName === filtroVendedor)
+        : pedidosPendentes;
+
+      pedidosFiltrados.forEach(pedido => {
+        // Agrupar por sabor
+        if (pedido.doces && Array.isArray(pedido.doces)) {
+          pedido.doces.forEach(item => {
+            const sabor = item.nome || item.sabor;
+            const quantidade = Number(item.quantidade || item.qtd) || 0;
+            if (!sabores[sabor]) sabores[sabor] = 0;
+            sabores[sabor] += quantidade;
+          });
+        }
+        // Montagem de caixas por cliente/pedido
+        if (pedido.caixa && pedido.caixa.toLowerCase().includes('caixa')) {
+          for(let i=0; i<(pedido.quantidadeCaixas||1); i++) {
+            let listaDoces = [];
+            if(pedido.doces && Array.isArray(pedido.doces)) {
+              pedido.doces.forEach(item => {
+                const sabor = item.nome || item.sabor;
+                const quantidade = Number(item.quantidade || item.qtd) || 0;
+                if(quantidade > 0) listaDoces.push(`${quantidade}x ${sabor}`);
+              });
+            }
+            listaDoces.sort();
+            caixas.push({
+              nome: pedido.DisplayName || '---',
+              montagem: listaDoces.join(' / ')
+            });
+          }
+        }
+      });
+
+      // CARDS
+      areaCards.innerHTML = '';
+      const listaSabores = Object.keys(sabores).map(s => ({
+        sabor: s,
+        qtd: sabores[s]
+      }));
+      listaSabores.sort((a, b) => a.sabor.localeCompare(b.sabor));
+      if(listaSabores.length === 0) {
+        areaCards.innerHTML = `<div class="alert alert-info text-center">Nenhum pedido pendente${filtroVendedor ? ' para este vendedor' : ''}!</div>`;
+      } else {
+        listaSabores.forEach(item => {
+          areaCards.innerHTML += `
+            <div class="col-12 col-md-3 col-lg-2">
+              <div class="card card-prod border-0 shadow h-100">
+                <div class="card-body d-flex flex-column justify-content-center align-items-center">
+                  <div class="fs-1 fw-bold mb-2" style="color:#604126">${item.qtd}</div>
+                  <div class="fs-6 fw-semibold text-center" style="color:#604126">${item.sabor}</div>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+      }
+
+      // TABELA
+      areaTabela.innerHTML = '';
+      if(listaSabores.length === 0) {
+        areaTabela.innerHTML = `<div class="alert alert-info text-center">Nenhum pedido pendente${filtroVendedor ? ' para este vendedor' : ''}!</div>`;
+      } else {
+        areaTabela.innerHTML = `
+          <table class="table table-bordered table-striped table-sm align-middle">
+            <thead class="table-light"><tr>
+              <th>Doce</th>
+              <th class="text-center">Quantidade</th>
+            </tr></thead>
+            <tbody>
+              ${listaSabores.map(item => `
+                <tr>
+                  <td>${item.sabor}</td>
+                  <td class="text-center fw-bold">${item.qtd}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+      }
+
+      // MONTAGEM DE CAIXAS agrupando por nome + montagem
+      areaMontagem.innerHTML = '';
+      if(caixas.length === 0) {
+        areaMontagem.innerHTML = `<div class="alert alert-info text-center">Nenhuma caixa para montar${filtroVendedor ? ' para este vendedor' : ''}!</div>`;
+        agrupadasMontagem = {};
+      } else {
+        let agrupadas = {};
+        caixas.forEach(caixa => {
+          const chave = `${caixa.nome}|||${caixa.montagem}`;
+          if (!agrupadas[chave]) agrupadas[chave] = { qtd: 0, nome: caixa.nome, montagem: caixa.montagem };
+          agrupadas[chave].qtd += 1;
+        });
+        agrupadasMontagem = agrupadas;
+
+        areaMontagem.innerHTML = `
+          <div class="mb-3 d-flex justify-content-end gap-2">
+            <button class="btn btn-outline-secondary btn-sm" onclick="copiarResumoCaixas()">Copiar Lista</button>
+            <button class="btn btn-outline-primary btn-sm" onclick="exportarPDFMontagem()">Exportar PDF</button>
+          </div>
+          <table class="table table-bordered table-hover align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Nome</th>
+                <th class="text-center">Qtd de caixas</th>
+                <th>Montagem da caixa</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${Object.values(agrupadas).sort((a,b)=>b.qtd-a.qtd).map(obj => `
+                <tr>
+                  <td class="fw-bold" style="font-size:1em">${obj.nome}</td>
+                  <td class="text-center fw-bold fs-5">${obj.qtd}</td>
+                  <td><span style="font-size:1.02em">${obj.montagem.split(' / ').map(d=>`<div>${d}</div>`).join('')}</span></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+      }
+    }
+
+    function montarSelectVendedor() {
+      const select = document.getElementById("selectVendedor");
+      select.innerHTML = '<option value="">Selecione o vendedor</option>';
+      vendedoresUnicos.sort();
+      vendedoresUnicos.forEach(v => {
+        select.innerHTML += `<option value="${v}">${v}</option>`;
+      });
+    }
+
+    // Alterna modos
+    document.getElementById("btnModoCards").onclick = function(){
+      this.classList.add('active');
+      document.getElementById("btnModoTabela").classList.remove('active');
+      document.getElementById("btnModoMontagem").classList.remove('active');
+      document.getElementById("areaCards").style.display = "";
+      document.getElementById("areaTabela").style.display = "none";
+      document.getElementById("areaMontagem").style.display = "none";
+    };
+    document.getElementById("btnModoTabela").onclick = function(){
+      this.classList.add('active');
+      document.getElementById("btnModoCards").classList.remove('active');
+      document.getElementById("btnModoMontagem").classList.remove('active');
+      document.getElementById("areaCards").style.display = "none";
+      document.getElementById("areaTabela").style.display = "";
+      document.getElementById("areaMontagem").style.display = "none";
+    };
+    document.getElementById("btnModoMontagem").onclick = function(){
+      this.classList.add('active');
+      document.getElementById("btnModoCards").classList.remove('active');
+      document.getElementById("btnModoTabela").classList.remove('active');
+      document.getElementById("areaCards").style.display = "none";
+      document.getElementById("areaTabela").style.display = "none";
+      document.getElementById("areaMontagem").style.display = "";
+    };
+
+    document.getElementById("btnVerGeral").onclick = function(){
+      this.classList.add('active');
+      document.getElementById("btnVerVendedor").classList.remove('active');
+      document.getElementById("filtroVendedor").style.display = "none";
+      renderSabores();
+    };
+    document.getElementById("btnVerVendedor").onclick = function(){
+      this.classList.add('active');
+      document.getElementById("btnVerGeral").classList.remove('active');
+      document.getElementById("filtroVendedor").style.display = "inline-block";
+      renderSabores(document.getElementById("selectVendedor").value);
+    };
+    document.getElementById("selectVendedor").onchange = function(){
+      renderSabores(this.value);
+    };
+    document.getElementById("btnAtualizar").onclick = function(){
+      carregarPedidos();
+    };
+
+    // Função copiar montagem de caixas
+    window.copiarResumoCaixas = function() {
+      let texto = '';
+      Object.values(agrupadasMontagem).forEach(obj => {
+        texto += `${obj.nome} - ${obj.qtd} caixa${obj.qtd>1?'s':''}\n`;
+        obj.montagem.split(' / ').forEach(d => { texto += d+'\n'; });
+        texto += '\n';
+      });
+      navigator.clipboard.writeText(texto);
+      showToast('Resumo copiado!', 'success');
+    };
+
+    // Função exportar montagem para PDF
+    window.exportarPDFMontagem = function() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      let y = 12;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(16);
+      doc.text("Montagem de Caixas - DoceGestorExpress", 10, y);
+      y += 12;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(12);
+      Object.values(agrupadasMontagem).forEach(obj => {
+        if (y > 270) { doc.addPage(); y = 15; }
+        doc.setFont("helvetica", "bold");
+        doc.text(`${obj.nome} - ${obj.qtd} caixa${obj.qtd>1?'s':''}`, 12, y);
+        y += 6;
+        doc.setFont("helvetica", "normal");
+        obj.montagem.split(' / ').forEach(l => { 
+          if (y > 280) { doc.addPage(); y = 15; }
+          doc.text('- '+l, 16, y); y += 5; 
+        });
+        y += 4;
+      });
+      doc.save('montagem_caixas.pdf');
+    };
+
+    // Utilitários
+    function showToast(msg, cor="primary") {
+      const toast = document.getElementById('toastNotificacao');
+      document.getElementById('toastMsg').innerText = msg;
+      toast.className = `toast align-items-center text-bg-${cor} border-0`;
+      const toastBootstrap = bootstrap.Toast.getOrCreateInstance(toast);
+      toastBootstrap.show();
+    }
+
+    // --- LOGIN ---
+    function mostrarPainelUsuario(user) {
+      document.getElementById("telaPainel").style.display = "block";
+      document.getElementById("usuarioLogadoBox").innerText = "Usuário logado: " + user.email;
+      document.getElementById("usuarioLogadoBox").style.display = 'block';
+      document.getElementById("btnLogoutBox").style.display = 'block';
+      document.getElementById("telaLogin").style.display = "none";
+      carregarPedidos();
+    }
+    function esconderPainel() {
+      document.getElementById("telaPainel").style.display = "none";
+      document.getElementById("usuarioLogadoBox").style.display = "none";
+      document.getElementById("btnLogoutBox").style.display = 'none';
+      document.getElementById("telaLogin").style.display = "block";
+      document.getElementById("loginMsg").innerText = "";
+    }
+
+    auth.onAuthStateChanged(function(user) {
+      if(user) {
+        mostrarPainelUsuario(user);
+      } else {
+        esconderPainel();
+      }
+    });
+
+    document.getElementById("btnLogin").onclick = function() {
+      const email = document.getElementById("loginEmail").value.trim();
+      const senha = document.getElementById("loginSenha").value.trim();
+      document.getElementById("loginMsg").innerText = "";
+      if(!email || !senha) {
+        document.getElementById("loginMsg").innerText = "Preencha todos os campos.";
+        return;
+      }
+      firebase.auth().signInWithEmailAndPassword(email, senha)
+        .then(userCredential => {
+          document.getElementById("loginMsg").innerText = "";
+        })
+        .catch(error => {
+          document.getElementById("loginMsg").innerText = "Erro: " + (error.message || "Falha no login");
+        });
+    };
+
+    document.getElementById("btnLogout").onclick = function() {
+      firebase.auth().signOut();
+    };
+  </script>
+</body>
+</html>

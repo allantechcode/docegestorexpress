@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>Meus Pedidos</title>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f9f9f9;
+    }
+    h2 {
+      text-align: center;
+      color: #4CAF50;
+    }
+    /* seu CSS anterior */
+    .pedido {
+      background: #fff;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      margin-bottom: 15px;
+    }
+    .status-tag {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: white;
+      text-transform: uppercase;
+    }
+    .pendente {
+      background-color: orange;
+    }
+    .aprovado {
+      background-color: #03a9f4;
+    }
+    .concluido {
+      background-color: #4CAF50;
+    }
+    .detalhes {
+      display: none;
+      margin-top: 10px;
+      background: #f1f1f1;
+      padding: 10px;
+      border-left: 3px solid #4CAF50;
+      border-radius: 6px;
+      white-space: normal;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 6px;
+    }
+    thead tr {
+      background: #604126;
+      color: #fff;
+    }
+    th, td {
+      padding: 6px;
+      border-bottom: 1px solid #ddd;
+      text-align: left;
+    }
+    button {
+      padding: 8px 14px;
+      border-radius: 6px;
+      border: none;
+      background: #604126;
+      color: white;
+      cursor: pointer;
+      margin-top: 10px;
+      margin-right: 8px;
+    }
+    button.cancelar {
+      background-color: #c0353e;
+    }
+    select {
+      padding: 8px;
+      margin: 10px 0 20px 0;
+      width: 100%;
+      max-width: 250px;
+      font-weight: 600;
+      color: #5c3a00;
+      border-radius: 6px;
+      border: 1px solid #c49d65;
+      cursor: pointer;
+      transition: border-color 0.3s ease;
+    }
+    select:hover, select:focus {
+      border-color: #604126;
+      outline: none;
+    }
+    #paginacao {
+      text-align: center;
+      margin-top: 20px;
+    }
+    .page-btn {
+      margin: 0 5px;
+      cursor: pointer;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+    }
+    .page-btn:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+
+    /* Estilo para info do usuário */
+    #usuarioInfo {
+      font-size: 0.9rem;
+      color: #5c3a00;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      justify-content: flex-end;
+    }
+    #btnSair {
+      background:none;
+      border:none;
+      padding:0;
+      font-weight: 700;
+      color: #5c3a00;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <h2 style="display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 1.8rem; color: #5c3a00; margin: 0;">
+    <!-- Ícone checkbox verde -->
+    <svg xmlns="http://www.w3.org/2000/svg" height="28" width="28" fill="#8BC34A" viewBox="0 0 24 24">
+      <path d="M20.285 6.709l-11.39 11.39-5.18-5.18 1.414-1.414 3.766 3.766 9.976-9.976z"/>
+    </svg>
+    Painel de Pedidos
+  </h2>
+
+  <!-- Informações do usuário logado e botão sair -->
+  <div id="usuarioInfo">
+    <span id="usuarioLogado">Usuário</span>
+    <button id="btnSair">Sair</button>
+  </div>
+
+  <label for="filtroStatus" style="font-weight: 600; color: #5c3a00;">Filtrar por status:</label>
+  <select id="filtroStatus" title="Filtrar por status">
+    <option value="pendente" selected>PENDENTE</option>
+    <option value="aprovado">APROVADO</option>
+    <option value="concluido">CONCLUÍDO</option>
+  </select>
+
+  <div id="listaPedidos"></div>
+  <div id="paginacao"></div>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBaeSVaAa8RoX_dYW8_YKxY7naw9vq8OX8",
+    authDomain: "docepedidoexpress.firebaseapp.com",
+    projectId: "docepedidoexpress",
+    storageBucket: "docepedidoexpress.firebasestorage.app",
+    messagingSenderId: "599415242749",
+    appId: "1:599415242749:web:e2b4ad85d82aef617ba394"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  // Elementos para usuário
+  const usuarioLogadoSpan = document.getElementById('usuarioLogado');
+  const btnSair = document.getElementById('btnSair');
+  btnSair.addEventListener('click', () => {
+    auth.signOut().then(() => {
+      alert('Você saiu do sistema.');
+      location.reload();
+    }).catch(error => {
+      alert('Erro ao sair: ' + error.message);
+    });
+  });
+
+  let pedidosTodos = [];
+  let paginaAtual = 1;
+  const porPagina = 10;
+
+  auth.onAuthStateChanged(user => {
+    if (!user) {
+      document.body.innerHTML = "<p style='text-align:center;color:#c00;'>Você precisa estar logado para visualizar seus pedidos.</p>";
+      return;
+    }
+    usuarioLogadoSpan.textContent = user.displayName || user.email || "Usuário";
+    document.getElementById("filtroStatus").value = "pendente";
+    carregarPedidosDoBanco(user.uid);
+  });
+
+  function formatarValor(valor) {
+    if (!valor && valor !== 0) return "R$0,00";
+
+    if (typeof valor === "string") {
+      const numStr = valor.replace(/[R$\s\.]/g, '').replace(',', '.');
+      valor = parseFloat(numStr);
+    }
+    if (isNaN(valor)) return "R$0,00";
+
+    return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  }
+
+  function carregarPedidosDoBanco(userId) {
+    db.collection("pedidos")
+      .where("usuarioId", "==", userId)
+      .get()
+      .then(snapshot => {
+        pedidosTodos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        pedidosTodos.sort((a, b) => (b.numeroPedido || 0) - (a.numeroPedido || 0));
+        carregarPedidos();
+      })
+      .catch(error => {
+        document.getElementById("listaPedidos").innerHTML =
+          "<p style='color:red;'>Erro ao carregar pedidos: " + error.message + "</p>";
+      });
+  }
+
+  function carregarPedidos() {
+    const filtro = document.getElementById("filtroStatus").value;
+    let pedidosFiltrados = pedidosTodos;
+
+    if (filtro !== "todos") {
+      pedidosFiltrados = pedidosTodos.filter(p => (p.status || "").toLowerCase() === filtro);
+    }
+
+    const inicio = (paginaAtual - 1) * porPagina;
+    const fim = inicio + porPagina;
+    const pedidosPagina = pedidosFiltrados.slice(inicio, fim);
+
+    const container = document.getElementById("listaPedidos");
+    container.innerHTML = "";
+
+    pedidosPagina.forEach((pedido, i) => {
+      const div = document.createElement("div");
+      div.className = "pedido";
+
+      const statusClass = pedido.status ? pedido.status.toLowerCase() : "";
+      const numeroPedidoExibido = pedido.numeroPedido || (inicio + i + 1);
+      const quantidadeCaixasExibida = pedido.quantidadeCaixas || 1;
+
+      div.innerHTML = `
+        <span class="status-tag ${statusClass}">${pedido.status ? pedido.status.toUpperCase() : "SEM STATUS"}</span><br>
+        <strong>${pedido.DisplayName || "Sem Nome"}</strong><br>
+        <strong>Pedido #${numeroPedidoExibido}</strong><br>
+        <strong>Data/Hora:</strong> ${pedido.dataHora || "Sem Data"}<br>
+        <strong>Tipo:</strong> ${pedido.caixa || "Não informado"}<br>
+        <strong>Quantidade de Caixas:</strong> ${quantidadeCaixasExibida}<br>
+        <strong>Valor Total:</strong> ${formatarValor(pedido.valorTotal)}<br>
+        <button onclick="mostrarDetalhes('${pedido.id}')">Detalhes</button>
+        <button onclick="refazerPedido('${pedido.id}')" style="margin-left:8px;">Refazer Pedido</button>
+        ${pedido.status === "PENDENTE" ? `<button onclick="cancelarPedido('${pedido.id}')" class="cancelar">Cancelar Pedido</button>` : ""}
+        <div class="detalhes" id="detalhes-${pedido.id}">
+          <table>
+            <thead>
+              <tr>
+                <th>Qtd</th>
+                <th>Doce</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${pedido.doces.map(d => `
+                <tr>
+                  <td>${d.quantidade}</td>
+                  <td>${d.nome}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          <br><strong>Total de Doces:</strong> ${pedido.totalDoces || 0}
+        </div>
+      `;
+
+      container.appendChild(div);
+    });
+
+    renderPaginacao(pedidosFiltrados.length);
+  }
+
+  function mostrarDetalhes(id) {
+    const el = document.getElementById("detalhes-" + id);
+    el.style.display = el.style.display === "block" ? "none" : "block";
+  }
+
+  function refazerPedido(pedidoId) {
+    const pedido = pedidosTodos.find(p => p.id === pedidoId);
+    if (!pedido) {
+      alert("Pedido não encontrado.");
+      return;
+    }
+
+    let novaQuantidade = prompt("Informe a nova quantidade de caixas:", pedido.quantidadeCaixas || 1);
+    if (novaQuantidade === null) {
+      return;
+    }
+    novaQuantidade = parseInt(novaQuantidade);
+    if (isNaN(novaQuantidade) || novaQuantidade <= 0) {
+      alert("Quantidade inválida. Operação cancelada.");
+      return;
+    }
+
+    const valorTotalAtualStr = pedido.valorTotal || "R$0,00";
+    const valorTotalAtualNum = parseFloat(valorTotalAtualStr.replace(/[R$\s\.]/g, '').replace(',', '.')) || 0;
+    const quantidadeAtual = Number(pedido.quantidadeCaixas) || 1;
+    const valorUnitario = quantidadeAtual > 0 ? valorTotalAtualNum / quantidadeAtual : 0;
+    const novoValorTotalNum = (valorUnitario * novaQuantidade).toFixed(2);
+    const novoValorTotalStr = "R$" + novoValorTotalNum.replace('.', ',');
+
+    const controleRef = db.collection("controle").doc("contadorPedidos");
+
+    db.runTransaction(async (transaction) => {
+      const doc = await transaction.get(controleRef);
+      let novoNumero = 1;
+      if (doc.exists) {
+        novoNumero = doc.data().ultimoNumero + 1;
+      }
+      transaction.set(controleRef, { ultimoNumero: novoNumero });
+
+      const novoPedido = {
+        ...pedido,
+        numeroPedido: novoNumero,
+        dataHora: new Date().toLocaleString('pt-BR'),
+        status: "PENDENTE",
+        quantidadeCaixas: novaQuantidade.toString(),
+        valorTotal: novoValorTotalStr
+      };
+
+      delete novoPedido.id;
+
+      const pedidoRef = db.collection("pedidos").doc();
+      transaction.set(pedidoRef, novoPedido);
+
+      return novoNumero;
+    }).then(novoNumero => {
+      alert(`Pedido refeito com número: ${novoNumero}`);
+
+      const user = auth.currentUser;
+      if (!user) return;
+      carregarPedidosDoBanco(user.uid);
+    }).catch(error => {
+      alert("Erro ao refazer pedido: " + error.message);
+    });
+  }
+
+  function cancelarPedido(pedidoId) {
+    if (!confirm("Tem certeza que deseja cancelar este pedido?")) return;
+
+    db.collection("pedidos").doc(pedidoId).delete()
+      .then(() => {
+        alert("Pedido cancelado com sucesso.");
+        pedidosTodos = pedidosTodos.filter(p => p.id !== pedidoId);
+        carregarPedidos();
+      })
+      .catch(error => {
+        alert("Erro ao cancelar pedido: " + error.message);
+      });
+  }
+
+  document.getElementById("filtroStatus").addEventListener("change", () => {
+    paginaAtual = 1;
+    carregarPedidos();
+  });
+
+  function renderPaginacao(total) {
+    const div = document.getElementById("paginacao");
+    div.innerHTML = "";
+
+    const totalPaginas = Math.ceil(total / porPagina);
+    for (let i = 1; i <= totalPaginas; i++) {
+      const btn = document.createElement("button");
+      btn.className = "page-btn";
+      btn.innerText = i;
+      if (i === paginaAtual) btn.disabled = true;
+      btn.onclick = () => {
+        paginaAtual = i;
+        carregarPedidos();
+      };
+      div.appendChild(btn);
+    }
+  }
+</script>
+<div id="footer" style="margin-top: 40px; text-align: center; 
+color: #aaa; font-size: 0.9rem; padding: 30px 0;">DoceGestorExpress • 2025<br>AllanTechCode &reg;</div></body> 
+
+</body>
+</html>

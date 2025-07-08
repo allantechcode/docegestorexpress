@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Administração de Usuários • DoceGestorExpress</title>
+  <link rel="icon" href="favicon.ico" type="image/x-icon" />
+  <style>
+    body {
+      background: #f3f2f1;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      color: #4a3b28;
+      margin: 0; padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px;
+    }
+    header {
+      max-width: 450px;
+      width: 100%;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    header img {
+      max-height: 55px;
+      border-radius: 8px;
+    }
+    h1 {
+      color: #c49d65;
+      font-size: 1.8rem;
+      margin-bottom: 12px;
+      letter-spacing: 1px;
+    }
+    .info-msg {
+      background: #fff3cd;
+      color: #856404;
+      padding: 12px 16px;
+      border-radius: 8px;
+      max-width: 450px;
+      margin-bottom: 20px;
+      font-weight: 600;
+      display: none;
+    }
+    #acessoNegado {
+      color: #c0353e;
+      font-weight: 700;
+      font-size: 1.2rem;
+      margin-top: 40px;
+    }
+    button {
+      cursor: pointer;
+      background: #604126;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 18px;
+      font-size: 1rem;
+      margin: 6px 4px;
+      font-weight: 600;
+      transition: background-color 0.25s;
+    }
+    button:hover:not(:disabled) {
+      background: #c49d65;
+      color: #604126;
+    }
+    button:disabled {
+      background: #ddd;
+      color: #999;
+      cursor: not-allowed;
+    }
+    main {
+      background: #fff;
+      border-radius: 16px;
+      max-width: 700px;
+      width: 100%;
+      padding: 20px 24px;
+      box-shadow: 0 2px 16px #0002;
+      margin-bottom: 40px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+    }
+    th, td {
+      padding: 10px 8px;
+      border-bottom: 1px solid #ddd;
+      text-align: left;
+      font-size: 1rem;
+      color: #604126;
+    }
+    th {
+      background: #f9f6f2;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+    tr:hover {
+      background-color: #f3eacb;
+    }
+    input, select {
+      font-size: 1rem;
+      padding: 8px 10px;
+      margin-bottom: 12px;
+      border: 1px solid #c49d65;
+      border-radius: 6px;
+      width: 100%;
+      box-sizing: border-box;
+      color: #4a3b28;
+    }
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .flex-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .flex-row > * {
+      flex: 1 1 120px;
+    }
+    #userListContainer {
+      max-height: 350px;
+      overflow-y: auto;
+      margin-top: 12px;
+    }
+    .actions button {
+      padding: 6px 10px;
+      font-size: 0.9rem;
+      margin: 0 4px 4px 0;
+      border-radius: 6px;
+    }
+    .actions button.edit {
+      background-color: #2196F3;
+      color: white;
+    }
+    .actions button.reset-password {
+      background-color: #f39c12;
+      color: white;
+    }
+    .actions button.delete {
+      background-color: #c0353e;
+      color: white;
+    }
+    @media (max-width: 540px) {
+      main {
+        padding: 15px 16px;
+      }
+      .flex-row {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <img src="logo.png" alt="Logo DoceGestorExpress" />
+  <h1>Administração de Usuários</h1>
+  <div id="userLoggedIn" style="font-weight:bold; margin-bottom: 8px; color: #604126;"></div>
+  <button id="btnLogout">Sair</button>
+</header>
+
+<div class="info-msg" id="infoMessage"></div>
+<div id="acessoNegado" style="display:none;">⚠️ Acesso negado. Você não tem permissão para acessar esta página.</div>
+
+<main id="adminContent" style="display:none;">
+  <section id="userListContainer">
+    <h2>Usuários Cadastrados</h2>
+    <table aria-label="Lista de usuários">
+      <thead>
+        <tr>
+          <th>Email</th>
+          <th>Nome</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="userTableBody"></tbody>
+    </table>
+  </section>
+
+  <section id="formSection" style="margin-top:30px;">
+    <h2 id="formTitle">Adicionar Novo Usuário</h2>
+    <div class="form-group">
+      <label for="inputEmail">Email</label>
+      <input type="email" id="inputEmail" placeholder="exemplo@dominio.com" />
+    </div>
+    <div class="form-group">
+      <label for="inputNome">Nome</label>
+      <input type="text" id="inputNome" placeholder="Nome completo" />
+    </div>
+    <div class="form-group" id="passwordGroup">
+      <label for="inputSenha">Senha</label>
+      <input type="password" id="inputSenha" placeholder="Senha para o novo usuário" />
+    </div>
+    <div class="flex-row">
+      <button id="btnSalvarUsuario">Salvar Usuário</button>
+      <button id="btnCancelarEdicao" style="display:none; background:#aaa; color:#333;">Cancelar</button>
+    </div>
+  </section>
+</main>
+
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
+<script>
+  // Config Firebase (copie o seu config exato)
+  const firebaseConfig = {
+    apiKey: "AIzaSyBaeSVaAa8RoX_dYW8_YKxY7naw9vq8OX8",
+    authDomain: "docepedidoexpress.firebaseapp.com",
+    projectId: "docepedidoexpress",
+    storageBucket: "docepedidoexpress.firebasestorage.app",
+    messagingSenderId: "599415242749",
+    appId: "1:599415242749:web:e2b4ad85d82aef617ba394",
+    measurementId: "G-H7QX7D597V"
+  };
+  firebase.initializeApp(firebaseConfig);
+
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  // ELEMENTOS
+  const acessoNegado = document.getElementById('acessoNegado');
+  const adminContent = document.getElementById('adminContent');
+  const infoMessage = document.getElementById('infoMessage');
+  const userLoggedIn = document.getElementById('userLoggedIn');
+  const btnLogout = document.getElementById('btnLogout');
+
+  const userTableBody = document.getElementById('userTableBody');
+  const formTitle = document.getElementById('formTitle');
+  const inputEmail = document.getElementById('inputEmail');
+  const inputNome = document.getElementById('inputNome');
+  const inputSenha = document.getElementById('inputSenha');
+  const passwordGroup = document.getElementById('passwordGroup');
+  const btnSalvarUsuario = document.getElementById('btnSalvarUsuario');
+  const btnCancelarEdicao = document.getElementById('btnCancelarEdicao');
+
+  let editarUid = null; // Para edição de usuário
+
+  // Limpa mensagem de info
+  function limpaMensagem() {
+    infoMessage.style.display = 'none';
+    infoMessage.textContent = '';
+  }
+  function mostrarMensagem(msg, tipo = 'info') {
+    infoMessage.style.display = 'block';
+    infoMessage.textContent = msg;
+    if (tipo === 'error') {
+      infoMessage.style.background = '#f8d7da';
+      infoMessage.style.color = '#721c24';
+    } else {
+      infoMessage.style.background = '#d1ecf1';
+      infoMessage.style.color = '#0c5460';
+    }
+  }
+
+  // Função para verificar se usuário é master
+  function isMasterUser(email) {
+    return email && email.toLowerCase() === 'boni.palhano@gmail.com';
+  }
+
+  // Logout
+  btnLogout.onclick = () => {
+    auth.signOut();
+  };
+
+  // Carregar lista de usuários via Admin SDK não é possível no front-end.
+  // Mas Firebase Auth não tem API no client para listar usuários.
+  // Precisamos de uma função alternativa: armazenar usuários no Firestore (coleção 'usuarios') com uid, email e nome, ou usar Cloud Functions.
+  // Para fins deste exemplo, vamos simular a lista consultando Firestore 'usuarios'.
+  // Você deve sincronizar seus usuários Auth com Firestore manualmente ou via trigger.
+
+  // Função para carregar usuários do Firestore 'usuarios'
+  async function carregarUsuarios() {
+    limpaMensagem();
+    userTableBody.innerHTML = '<tr><td colspan="3">Carregando usuários...</td></tr>';
+    try {
+      const snapshot = await db.collection('usuarios').orderBy('email').get();
+      if (snapshot.empty) {
+        userTableBody.innerHTML = '<tr><td colspan="3">Nenhum usuário cadastrado.</td></tr>';
+        return;
+      }
+      userTableBody.innerHTML = '';
+      snapshot.forEach(doc => {
+        const user = doc.data();
+        const uid = doc.id;
+        const tr = document.createElement('tr');
+
+        const tdEmail = document.createElement('td');
+        tdEmail.textContent = user.email || '-';
+
+        const tdNome = document.createElement('td');
+        tdNome.textContent = user.nome || '-';
+
+        const tdAcoes = document.createElement('td');
+        tdAcoes.className = 'actions';
+
+        // Botão editar
+        const btnEditar = document.createElement('button');
+        btnEditar.textContent = 'Editar';
+        btnEditar.className = 'edit';
+        btnEditar.onclick = () => iniciarEdicaoUsuario(uid, user);
+        tdAcoes.appendChild(btnEditar);
+
+        // Botão reset senha
+        const btnReset = document.createElement('button');
+        btnReset.textContent = 'Redefinir Senha';
+        btnReset.className = 'reset-password';
+        btnReset.onclick = () => redefinirSenha(user.email);
+        tdAcoes.appendChild(btnReset);
+
+        // Botão excluir
+        const btnExcluir = document.createElement('button');
+        btnExcluir.textContent = 'Excluir';
+        btnExcluir.className = 'delete';
+        btnExcluir.onclick = () => excluirUsuario(uid, user.email);
+        tdAcoes.appendChild(btnExcluir);
+
+        tr.appendChild(tdEmail);
+        tr.appendChild(tdNome);
+        tr.appendChild(tdAcoes);
+
+        userTableBody.appendChild(tr);
+      });
+    } catch (error) {
+      userTableBody.innerHTML = `<tr><td colspan="3">Erro ao carregar usuários: ${error.message}</td></tr>`;
+    }
+  }
+
+  // Iniciar edição
+  function iniciarEdicaoUsuario(uid, user) {
+    editarUid = uid;
+    formTitle.textContent = 'Editar Usuário';
+    inputEmail.value = user.email || '';
+    inputNome.value = user.nome || '';
+    inputSenha.value = '';
+    passwordGroup.style.display = 'none';
+    btnCancelarEdicao.style.display = 'inline-block';
+    limpaMensagem();
+  }
+
+  // Cancelar edição
+  btnCancelarEdicao.onclick = () => {
+    editarUid = null;
+    formTitle.textContent = 'Adicionar Novo Usuário';
+    inputEmail.value = '';
+    inputNome.value = '';
+    inputSenha.value = '';
+    passwordGroup.style.display = 'block';
+    btnCancelarEdicao.style.display = 'none';
+    limpaMensagem();
+  };
+
+  // Salvar usuário (adicionar ou editar)
+  btnSalvarUsuario.onclick = async () => {
+    limpaMensagem();
+    const email = inputEmail.value.trim().toLowerCase();
+    const nome = inputNome.value.trim();
+    const senha = inputSenha.value;
+
+    if (!email || !nome || (!editarUid && !senha)) {
+      mostrarMensagem('Preencha todos os campos obrigatórios.', 'error');
+      return;
+    }
+
+    if (editarUid) {
+      // Atualizar usuário no Firestore (nome e email)
+      try {
+        // Atualiza apenas no Firestore
+        await db.collection('usuarios').doc(editarUid).update({ email, nome });
+        mostrarMensagem('Usuário atualizado com sucesso.');
+        btnCancelarEdicao.click();
+        carregarUsuarios();
+      } catch (e) {
+        mostrarMensagem('Erro ao atualizar usuário: ' + e.message, 'error');
+      }
+    } else {
+      // Criar usuário novo no Auth e Firestore
+      try {
+        // Criar usuário no Auth via Admin SDK não é possível pelo client
+        // Então, para criar usuário com senha, precisa de backend ou usar a API REST do Firebase Identity Toolkit
+        // Aqui vamos usar o método createUserWithEmailAndPassword para criar o usuário autenticado, e em seguida criar no Firestore
+        // Como estamos logados como master, vamos criar usuário com createUserWithEmailAndPassword em uma instância separada para não sair do master
+        mostrarMensagem('Criando usuário, aguarde...');
+        
+        // Cria usuário numa app secundária para não desconectar master
+        const secondaryApp = firebase.initializeApp(firebaseConfig, "secondary");
+        const secondaryAuth = secondaryApp.auth();
+
+        await secondaryAuth.createUserWithEmailAndPassword(email, senha);
+
+        // Salvar dados no Firestore
+        const user = secondaryAuth.currentUser;
+        await db.collection('usuarios').doc(user.uid).set({ email, nome });
+
+        // Desconecta app secundária
+        await secondaryAuth.signOut();
+        await secondaryApp.delete();
+
+        mostrarMensagem('Usuário criado com sucesso!');
+        inputEmail.value = '';
+        inputNome.value = '';
+        inputSenha.value = '';
+        carregarUsuarios();
+      } catch (e) {
+        mostrarMensagem('Erro ao criar usuário: ' + e.message, 'error');
+      }
+    }
+  };
+
+  // Enviar email para redefinir senha
+  async function redefinirSenha(email) {
+    if (!confirm(`Enviar e-mail de redefinição de senha para:\n${email}?`)) return;
+    try {
+      await auth.sendPasswordResetEmail(email);
+      alert('E-mail de redefinição de senha enviado para ' + email);
+    } catch (e) {
+      alert('Erro ao enviar e-mail: ' + e.message);
+    }
+  }
+
+  // Excluir usuário - apenas do Firestore, pois excluir do Auth precisa Admin SDK (backend)
+  async function excluirUsuario(uid, email) {
+    if (!confirm(`Excluir usuário ${email}?\nATENÇÃO: Isto só removerá do banco de dados, não do sistema de autenticação.`)) return;
+    try {
+      await db.collection('usuarios').doc(uid).delete();
+      mostrarMensagem('Usuário excluído com sucesso.');
+      carregarUsuarios();
+    } catch (e) {
+      mostrarMensagem('Erro ao excluir usuário: ' + e.message, 'error');
+    }
+  }
+
+  // Monitorar autenticação e controlar acesso
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      if (!isMasterUser(user.email)) {
+        acessoNegado.style.display = 'block';
+        adminContent.style.display = 'none';
+        userLoggedIn.textContent = '';
+        btnLogout.style.display = 'inline-block';
+        return;
+      }
+      acessoNegado.style.display = 'none';
+      adminContent.style.display = 'block';
+      userLoggedIn.textContent = `Usuário: ${user.email}`;
+      carregarUsuarios();
+      btnLogout.style.display = 'inline-block';
+    } else {
+      acessoNegado.style.display = 'none';
+      adminContent.style.display = 'none';
+      userLoggedIn.textContent = '';
+      btnLogout.style.display = 'none';
+    }
+  });
+
+</script>
+<div id="footer" style="margin-top: 40px; text-align: center; 
+color: #aaa; font-size: 0.9rem; padding: 30px 0;">DoceGestorExpress • 2025<br>AllanTechCode &reg;</div></body> 
+
+</body>
+</html>
