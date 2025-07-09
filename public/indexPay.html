@@ -218,7 +218,6 @@
           <option value="todos">Todos</option>
           <option value="pendente" selected>Pendente</option>
           <option value="aprovado">Aprovado</option>
-          <option value="aguardando pagamento">Aguardando Pagamento</option>
           <option value="concluido">Concluído</option>
         </select>
       </div>
@@ -395,7 +394,6 @@ const iconsGrupo = {
 const statusLabels = {
   "PENDENTE":  { label:"PENDENTE",  cls:"st-pendente",   icon:"hourglass-split" },
   "APROVADO":  { label:"APROVADO",  cls:"st-aprovado",   icon:"check2" },
-  "AGUARDANDO PAGAMENTO": { label:"AGUARDANDO PAGAMENTO", cls:"st-pagamento", icon:"wallet2" },
   "CONCLUIDO": { label:"CONCLUÍDO", cls:"st-concluido",  icon:"patch-check-fill" }
 };
 
@@ -628,7 +626,7 @@ function carregarPedidos() {
   pedidosPagina.forEach((pedido) => {
     const st = statusLabels[(pedido.status||"PENDENTE").toUpperCase()] || statusLabels["PENDENTE"];
     let statusPag = (pedido.statusPagamento || pedido.status || "").toUpperCase();
-    let podePagar = ["AGUARDANDO PAGAMENTO", "AGUARDANDO", "PARCIAL"].includes(statusPag);
+    let podePagar = ["AGUARDANDO", "PARCIAL"].includes(statusPag);
     let valorPago = pedido.valorPago || 0;
     let valorTotalNum = 0;
     if (pedido.valorTotal) {
